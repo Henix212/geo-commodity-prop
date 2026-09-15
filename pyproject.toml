@@ -1,0 +1,16 @@
+[project]
+name = "geo-commodity-prop"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "torch",
+    "torch-geometric",
+    "networkx",
+    "pandas",
+    "numpy",
+    "transformers",
+    "requests",
+    "beautifulsoup4",
+    "yfinance",
+    "vectorbt",
+]
