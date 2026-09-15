@@ -1,27 +1,27 @@
 # Geo Commodity Prop
 
-GNN de propagation de chocs sur les chaînes physiques commodities  
-(mines → ports → chokepoints → smelters → raffineries → tension / alpha).
+GNN for shock propagation along physical commodity supply chains  
+(mines → ports → chokepoints → smelters → refiners → tension / alpha).
 
-Roadmap détaillée : voir [`TODO.md`](TODO.md).
+Detailed roadmap: see [`TODO.md`](TODO.md).
 
 ## Architecture
 
-1. **Graphe physique** — nœuds (mines, ports, bottlenecks, …) + arêtes (flux) en YAML → NetworkX / PyG  
-2. **Événements NLP** — scrape news → LLM → `[entité, type, sévérité]` injecté sur le graphe  
-3. **GNN (GAT)** — propagation de l’onde de choc → score de tension par commodity  
-4. **Quant** — signal → backtest VectorBT
+1. **Physical graph** — nodes (mines, ports, bottlenecks, …) + edges (flows) in YAML → NetworkX / PyG  
+2. **NLP events** — scrape news → LLM → `[entity, type, severity]` injected into the graph  
+3. **GNN (GAT)** — shock-wave propagation → tension score per commodity  
+4. **Quant** — signal → VectorBT backtest
 
 ```text
 backend/
   graph_core/     # builder + network_data YAML
-  ingestion/      # scrapers + parser LLM
-  database/       # prod, stocks, TC/RC, policies, events
+  ingestion/      # scrapers + LLM parser
+  database/       # production, stocks, TC/RC, policies, events
   quant/          # market_data + strategy + backtest
-  models/         # checkpoints GNN
+  models/         # GNN checkpoints
 ```
 
-## Data sources (topologie)
+## Data sources (topology)
 
 - [USGS Copper](https://www.usgs.gov/centers/national-minerals-information-center/copper-statistics-and-information)
 - [ICSG](https://icsg.org)
@@ -34,18 +34,18 @@ backend/
 
 ```text
 backend/graph_core/network_data/
-  shared/          # bottlenecks (Hormuz, Suez, Malacca, Bosphore, …)
+  shared/          # bottlenecks (Hormuz, Suez, Malacca, Bosphorus, …)
   metals/          # copper, aluminum, silver, gold
   energy/          # oil, lng
   agriculture/     # wheat, corn
 ```
 
-YAML = topologie statique. Prix, prod réelle, TC/RC, policies → `database/` + `quant/` (pas les YAML).
+YAML = static topology. Prices, actual production, TC/RC, and policies belong in `database/` + `quant/` (not in the YAML files).
 
-## Run (Phase 0)
+## Run
 
 ```bash
 uv sync
 uv run python -m backend.main --sector metals
-# ou: PYTHONPATH=. python3 -m backend.main --sector metals
+# or: PYTHONPATH=. python3 -m backend.main --sector metals
 ```

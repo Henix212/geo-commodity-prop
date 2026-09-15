@@ -1,104 +1,104 @@
 # TODO — Geo Commodity Prop
 
-GNN pour la propagation de chocs sur les chaînes physiques commodities  
-(mines → ports → chokepoints → smelters → raffineries → prix / alpha).
+GNN for shock propagation along physical commodity supply chains  
+(mines → ports → chokepoints → smelters → refiners → price / alpha).
 
-Stack cible : PyTorch Geometric · NetworkX · transformers / LLM local · VectorBT · yfinance.
+Target stack: PyTorch Geometric · NetworkX · transformers / local LLM · VectorBT · yfinance.
 
 ---
 
-## Phase 0 — Fondations projet
+## Phase 0 — Project foundations
 
 - [x] `pyproject.toml` + `uv` (torch, torch-geometric, networkx, pandas, numpy, transformers, requests, beautifulsoup4, yfinance, vectorbt, pyyaml)
-- [x] Layout `backend/` (`graph_core`, `ingestion`, `database`, `quant`, `models`)
-- [x] Structure YAML `network_data/{shared,metals,energy,agriculture}/`
-- [x] `config.py` — chemins, tickers, seuils, env
-- [x] `main.py` — point d’entrée (build graph → events → inference → signal)
-- [x] Packages Python (`__init__.py`) + imports propres
+- [x] `backend/` layout (`graph_core`, `ingestion`, `database`, `quant`, `models`)
+- [x] YAML structure `network_data/{shared,metals,energy,agriculture}/`
+- [x] `config.py` — paths, tickers, thresholds, env
+- [x] `main.py` — entry point (build graph → events → inference → signal)
+- [x] Python packages (`__init__.py`) + clean imports
 
 ---
 
-## Phase 1 — Modélisation du graphe (réseau physique)
+## Phase 1 — Graph modeling (physical network)
 
-Fichiers : `backend/graph_core/` + `network_data/`
+Files: `backend/graph_core/` + `network_data/`
 
-### Topologie YAML (statique)
-- [x] Copper : mines, ports, smelters, refiners, scrap, consumers, exchanges
+### Static YAML topology
+- [x] Copper: mines, ports, smelters, refiners, scrap, consumers, exchanges
 - [x] Aluminum — bauxite → alumina → smelter
-- [x] Silver / Gold — mines → refiners → vaults LBMA/COMEX/SGE
+- [x] Silver / Gold — mines → refiners → LBMA/COMEX/SGE vaults
 - [x] Oil — fields → terminals → Hormuz/Malacca/Suez → refineries
 - [x] LNG — liquefaction → chokepoints → regas → hubs (TTF/JKM/HH)
-- [x] Wheat / Corn — régions → silos/ports → Bosphore / Gulf → mills
-- [x] Shared bottlenecks (+ Ormuz, Bosphore, Gibraltar)
+- [x] Wheat / Corn — regions → silos/ports → Bosphorus / Gulf → mills
+- [x] Shared bottlenecks (+ Hormuz, Bosphorus, Gibraltar)
 
-### Builder → tenseurs GNN
+### Builder → GNN tensors
 - [x] `builder.py` — merge shared + sector YAML (+ `load_commodity`)
-- [x] Export NetworkX (`nx.DiGraph`) depuis le merge
-- [x] Conversion PyG (`torch_geometric.data.Data`)
-- [x] Features nœud : type one-hot, capacity, stock, lat/lon, event severity
-- [x] Features arête : flow_type, weight, product_form, transit_days
-- [x] Validation : endpoints + cohérence `accepts_forms`
+- [x] NetworkX export (`MultiDiGraph`) from merged network
+- [x] PyG conversion (`torch_geometric.data.Data`)
+- [x] Node features: type one-hot, capacity, stock, lat/lon, event severity
+- [x] Edge features: flow_type, weight, product_form, transit_days
+- [x] Validation: edge endpoints + `accepts_forms` consistency
 
-### Données quant (hors YAML — DB / market)
-- [ ] Production réelle par mine (vs `capacity_kt`) → `database/`
-- [ ] TC/RC par route → `database/`
-- [ ] Prix LME / SHFE / COMEX (time series) → `quant/market_data.py`
-- [ ] Policies commerciales (ban Indonésie, taxes Chili, …) → table / config datée
-
----
-
-## Phase 2 — Injection d’événements (moteur NLP)
-
-Fichiers : `backend/ingestion/`
-
-- [ ] `scrapers.py` — RSS / news / rapports (USGS, maritime, energy ministries)
-- [ ] `parser_llm.py` — LLM → triplet `[entité, type_event, sévérité 0–1]`
-- [ ] Mapping entité texte → `node_id` du graphe (alias / fuzzy / gazetteer)
-- [ ] Types d’événements : grève, accident, sanction, météo, congestion, force majeure
-- [ ] Injection dynamique : feature temporaire sur le nœud (decay temporel)
-- [ ] Persistance événements en DB (`database/models.py`)
+### Quant data (outside YAML — DB / market)
+- [ ] Actual mine production (vs nameplate `capacity_kt`) → `database/`
+- [ ] TC/RC by route → `database/`
+- [ ] LME / SHFE / COMEX price time series → `quant/market_data.py`
+- [ ] Trade-policy constraints (Indonesia ore rules, Chile taxes, …) → dated table / config
 
 ---
 
-## Phase 3 — Propagation GNN (cœur modèle)
+## Phase 2 — Event injection (NLP engine)
 
-Fichiers : `backend/models/` + entraînement
+Files: `backend/ingestion/`
 
-- [ ] Baseline : diffusion NetworkX / random walk (sanity check sans deep learning)
-- [ ] Architecture GAT (Graph Attention) — PyG
-- [ ] Input : graphe + features events → output : score de tension par commodity / nœud
-- [ ] Labels : réactions prix historiques post-choc (pour supervised / semi-supervised)
-- [ ] Entraînement, checkpoints, eval (MAE tension, directionnalité prix)
-- [ ] Ablations : avec/sans scrap, avec/sans chokepoints
+- [ ] `scrapers.py` — RSS / news / reports (USGS, maritime, energy ministries)
+- [ ] `parser_llm.py` — LLM → triplet `[entity, event_type, severity 0–1]`
+- [ ] Text entity → graph `node_id` mapping (alias / fuzzy / gazetteer)
+- [ ] Event types: strike, accident, sanction, weather, congestion, force majeure
+- [ ] Dynamic injection: temporary node feature (time decay)
+- [ ] Persist events in DB (`database/models.py`)
+
+---
+
+## Phase 3 — GNN propagation (model core)
+
+Files: `backend/models/` + training
+
+- [ ] Baseline: NetworkX diffusion / random walk (sanity check without deep learning)
+- [ ] GAT architecture (Graph Attention) — PyG
+- [ ] Input: graph + event features → output: tension score per commodity / node
+- [ ] Labels: historical post-shock price reactions (supervised / semi-supervised)
+- [ ] Training, checkpoints, eval (tension MAE, price directionality)
+- [ ] Ablations: with/without scrap, with/without chokepoints
 
 ---
 
 ## Phase 4 — Quant / alpha / backtest
 
-Fichiers : `backend/quant/`
+Files: `backend/quant/`
 
-- [ ] `market_data.py` — fetch & cache prix (yfinance / APIs futures)
-- [ ] `strategy.py` — tension GNN → signal long/short
-- [ ] Backtest VectorBT (sharpe, drawdown, turnover)
-- [ ] Stress scenarios : coupe Escondida, blocage Panama, fermeture Suez
-- [ ] Analyse centralité (betweenness) → single points of failure
+- [ ] `market_data.py` — fetch & cache prices (yfinance / futures APIs)
+- [ ] `strategy.py` — GNN tension → long/short signal
+- [ ] VectorBT backtest (sharpe, drawdown, turnover)
+- [ ] Stress scenarios: Escondida outage, Panama blockade, Suez closure
+- [ ] Centrality analysis (betweenness) → single points of failure
 
 ---
 
 ## Phase 5 — Database & ops
 
-Fichiers : `backend/database/`
+Files: `backend/database/`
 
-- [ ] `models.py` — nodes snapshot, edges, events, prices, production, policies
-- [ ] `db.py` — connexion, migrations, CRUD
-- [ ] Jobs périodiques : scrape news, refresh prices, refresh production
-- [ ] Logging / monitoring basique
+- [ ] `models.py` — node snapshots, edges, events, prices, production, policies
+- [ ] `db.py` — connection, migrations, CRUD
+- [ ] Periodic jobs: scrape news, refresh prices, refresh production
+- [ ] Basic logging / monitoring
 
 ---
 
-## Ordre de travail suggéré (prochaines actions)
+## Suggested next steps
 
-1. Scraper RSS + parser LLM → event injecté sur un nœud (Phase 2)
-2. Baseline diffusion NetworkX / centralité sur copper & oil
-3. `market_data.py` — séries HG=F, CL=F, GC=F, SI=F
-4. GAT minimal → score tension → VectorBT smoke backtest
+1. RSS scraper + LLM parser → inject one event onto a node (Phase 2)
+2. NetworkX diffusion / centrality baseline on copper & oil
+3. `market_data.py` — HG=F, CL=F, GC=F, SI=F series
+4. Minimal GAT → tension score → VectorBT smoke backtest
