@@ -53,10 +53,26 @@ RSS_FEEDS: list[str] = [
     feed.strip()
     for feed in os.getenv(
         "GCP_RSS_FEEDS",
-        "https://www.mining.com/feed/,https://oilprice.com/rss/main",
+        ",".join(
+            [
+                "https://www.mining.com/feed/",
+                "https://oilprice.com/rss/main",
+                "https://www.eia.gov/rss/todayinenergy.xml",
+                "https://news.google.com/rss/search?q=copper+OR+Hormuz+OR+LNG+OR+Escondida&hl=en-US&gl=US&ceid=US:en",
+            ]
+        ),
     ).split(",")
     if feed.strip()
 ]
+
+GDELT_QUERY = os.getenv(
+    "GCP_GDELT_QUERY",
+    "(copper OR aluminum OR aluminium OR silver OR gold OR LNG OR crude OR oil "
+    "OR wheat OR corn OR Hormuz OR Panama OR Suez OR Escondida OR Malacca "
+    "OR strike OR sanction OR outage OR blockade)",
+)
+GDELT_TIMESPAN = os.getenv("GCP_GDELT_TIMESPAN", "24h")
+GDELT_MAXRECORDS = int(os.getenv("GCP_GDELT_MAXRECORDS", "75"))
 LLM_MODEL_NAME = os.getenv("GCP_LLM_MODEL", "local")
 
 

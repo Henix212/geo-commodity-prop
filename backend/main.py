@@ -47,9 +47,26 @@ def graph_tensors(network: dict) -> tuple:
 
 
 def ingest_events(_network: dict) -> list[dict]:
-    """Phase 2 stub — scrapers + LLM triples."""
-    logger.info("Event ingestion not implemented yet (Phase 2)")
-    return []
+    """Fetch free RSS + GDELT articles (LLM parsing comes next)."""
+    from backend.ingestion.scrapers import save_articles, scrape_all
+
+    articles = scrape_all(
+        gdelt_timespan=config.GDELT_TIMESPAN,
+        gdelt_maxrecords=config.GDELT_MAXRECORDS,
+    )
+    path = save_articles(articles)
+    logger.info("Ingested %d articles → %s", len(articles), path)
+    return [
+        {
+            "uid": a.uid,
+            "source": a.source,
+            "title": a.title,
+            "url": a.url,
+            "published": a.published,
+            "summary": a.summary,
+        }
+        for a in articles
+    ]
 
 
 def run_inference(_network: dict, _events: list[dict]) -> dict[str, float]:
@@ -64,13 +81,13 @@ def make_signal(_tensions: dict[str, float]) -> dict | None:
     return None
 
 
-def run(sector: str | None = None) -> dict:
+def run(sector: str | None = None, *, skip_ingest: bool = False) -> dict:
     config.ensure_dirs()
     sector = sector or config.DEFAULT_SECTOR
 
     network = build_graph(sector)
     _nx_graph, _pyg_data = graph_tensors(network)
-    events = ingest_events(network)
+    events = [] if skip_ingest else ingest_events(network)
     tensions = run_inference(network, events)
     signal = make_signal(tensions)
 
@@ -96,6 +113,11 @@ def main(argv: list[str] | None = None) -> None:
         help="Sector to load (metals | energy | agriculture)",
     )
     parser.add_argument(
+        "--skip-ingest",
+        action="store_true",
+        help="Skip RSS/GDELT scraping",
+    )
+    parser.add_argument(
         "--log-level",
         default=config.LOG_LEVEL,
         help="Logging level (DEBUG, INFO, ...)",
@@ -107,10 +129,11 @@ def main(argv: list[str] | None = None) -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
-    result = run(sector=args.sector)
+    result = run(sector=args.sector, skip_ingest=args.skip_ingest)
     print(
         f"[{result['sector']}] nodes={result['n_nodes']} edges={result['n_edges']} "
-        f"commodities={result['commodities']} ticker={result['ticker']}"
+        f"commodities={result['commodities']} events={result['n_events']} "
+        f"ticker={result['ticker']}"
     )
 
 
