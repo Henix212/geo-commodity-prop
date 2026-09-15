@@ -2,4 +2,34 @@ nodes:
   - id: maritime_route_pacific
     commodity: cross_metal
     type: bottleneck
-    description: "Route maritime Pacifique Sud"
+    description: "Route maritime Pacifique Sud (Chili/Perou -> Asie)"
+
+  - id: chokepoint_panama
+    commodity: cross_metal
+    type: bottleneck
+    description: "Canal de Panama (Amérique du Sud -> Asie)"
+    country: Panama
+
+  - id: chokepoint_malacca
+    commodity: cross_metal
+    type: bottleneck
+    description: "Detroit de Malacca (Asie -> Europe)"
+    country: Malaysia/Indonesia/Singapore
+
+  - id: chokepoint_bab_el_mandeb
+    commodity: cross_metal
+    type: bottleneck
+    description: "Bab el-Mandeb (Mer Rouge -> Europe)"
+    country: Yemen/Djibouti
+
+  - id: chokepoint_suez
+    commodity: cross_metal
+    type: bottleneck
+    description: "Canal de Suez (Afrique -> Europe)"
+    country: Egypt
+
+  - id: chokepoint_cape_hope
+    commodity: cross_metal
+    type: bottleneck
+    description: "Cap de Bonne-Esperance (route alternative Afrique -> Europe)"
+    country: South Africa
