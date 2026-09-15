@@ -1,49 +1,969 @@
 commodity: copper
 sector: metals
+description: "Physical copper network — mines, ports, smelters, refiners, consumers, exchanges"
 
+# ---------------------------------------------------------------------------
+# Nodes
+# ---------------------------------------------------------------------------
 nodes:
+  # --- Mines (concentrate / ore) ---
   - id: mine_escondida
     commodity: copper
     type: mine
+    product_form: concentrate
     country: Chile
     region: Atacama
+    operator: BHP
     capacity_kt: 1200
+    lat: -24.27
+    lon: -69.07
 
+  - id: mine_collahuasi
+    commodity: copper
+    type: mine
+    product_form: concentrate
+    country: Chile
+    region: Tarapaca
+    operator: Glencore/Anglo American
+    capacity_kt: 570
+    lat: -20.98
+    lon: -68.71
+
+  - id: mine_chuquicamata
+    commodity: copper
+    type: mine
+    product_form: concentrate
+    country: Chile
+    region: Antofagasta
+    operator: Codelco
+    capacity_kt: 350
+    lat: -22.29
+    lon: -68.90
+
+  - id: mine_el_teniente
+    commodity: copper
+    type: mine
+    product_form: concentrate
+    country: Chile
+    region: OHiggins
+    operator: Codelco
+    capacity_kt: 400
+    lat: -34.09
+    lon: -70.35
+
+  - id: mine_cerro_verde
+    commodity: copper
+    type: mine
+    product_form: concentrate
+    country: Peru
+    region: Arequipa
+    operator: Freeport-McMoRan
+    capacity_kt: 450
+    lat: -16.53
+    lon: -71.60
+
+  - id: mine_antamina
+    commodity: copper
+    type: mine
+    product_form: concentrate
+    country: Peru
+    region: Ancash
+    operator: Glencore
+    capacity_kt: 400
+    lat: -9.53
+    lon: -77.57
+
+  - id: mine_morenci
+    commodity: copper
+    type: mine
+    product_form: concentrate
+    country: USA
+    region: Arizona
+    operator: Freeport-McMoRan
+    capacity_kt: 400
+    lat: 33.05
+    lon: -109.33
+
+  - id: mine_grasberg
+    commodity: copper
+    type: mine
+    product_form: concentrate
+    country: Indonesia
+    region: Papua
+    operator: Freeport Indonesia
+    capacity_kt: 700
+    lat: -4.05
+    lon: 137.12
+
+  - id: mine_kansanshi
+    commodity: copper
+    type: mine
+    product_form: concentrate
+    country: Zambia
+    region: North-Western
+    operator: First Quantum
+    capacity_kt: 250
+    lat: -12.09
+    lon: 26.43
+
+  - id: mine_kamoa_kakula
+    commodity: copper
+    type: mine
+    product_form: concentrate
+    country: DR Congo
+    region: Lualaba
+    operator: Ivanhoe/Zijin
+    capacity_kt: 450
+    lat: -10.73
+    lon: 25.42
+
+  - id: mine_las_bambas
+    commodity: copper
+    type: mine
+    product_form: concentrate
+    country: Peru
+    region: Apurimac
+    operator: MMG
+    capacity_kt: 300
+    lat: -14.08
+    lon: -72.30
+
+  # --- Export ports ---
   - id: port_antofagasta
     commodity: copper
     type: port
     country: Chile
     region: Antofagasta
+    lat: -23.65
+    lon: -70.40
+
+  - id: port_mejillones
+    commodity: copper
+    type: port
+    country: Chile
+    region: Antofagasta
+    lat: -23.10
+    lon: -70.45
+
+  - id: port_iquique
+    commodity: copper
+    type: port
+    country: Chile
+    region: Tarapaca
+    lat: -20.23
+    lon: -70.14
+
+  - id: port_san_antonio
+    commodity: copper
+    type: port
+    country: Chile
+    region: Valparaiso
+    lat: -33.58
+    lon: -71.61
+
+  - id: port_callao
+    commodity: copper
+    type: port
+    country: Peru
+    region: Lima
+    lat: -12.05
+    lon: -77.14
+
+  - id: port_matadi
+    commodity: copper
+    type: port
+    country: DR Congo
+    region: Kongo Central
+    lat: -5.82
+    lon: 13.45
+
+  - id: port_durban
+    commodity: copper
+    type: port
+    country: South Africa
+    region: KwaZulu-Natal
+    lat: -29.87
+    lon: 31.02
+
+  - id: port_amarahapura
+    commodity: copper
+    type: port
+    country: Indonesia
+    region: Papua
+    description: "Amamapare / Grasberg export terminal"
+    lat: -4.83
+    lon: 136.85
 
   - id: port_qingdao
     commodity: copper
     type: port
     country: China
     region: Shandong
+    lat: 36.07
+    lon: 120.38
+
+  - id: port_shanghai
+    commodity: copper
+    type: port
+    country: China
+    region: Shanghai
+    lat: 31.23
+    lon: 121.47
+
+  - id: port_ningbo
+    commodity: copper
+    type: port
+    country: China
+    region: Zhejiang
+    lat: 29.87
+    lon: 121.55
+
+  - id: port_busan
+    commodity: copper
+    type: port
+    country: South Korea
+    region: Busan
+    lat: 35.10
+    lon: 129.04
+
+  - id: port_rotterdam
+    commodity: copper
+    type: port
+    country: Netherlands
+    region: South Holland
+    lat: 51.95
+    lon: 4.14
+
+  - id: port_hamburg
+    commodity: copper
+    type: port
+    country: Germany
+    region: Hamburg
+    lat: 53.54
+    lon: 9.98
+
+  # --- Smelters (concentrate -> blister / anode) ---
+  - id: smelter_chuquicamata
+    commodity: copper
+    type: smelter
+    product_form: blister
+    country: Chile
+    region: Antofagasta
+    operator: Codelco
+    capacity_kt: 450
+    lat: -22.29
+    lon: -68.90
+
+  - id: smelter_alho
+    commodity: copper
+    type: smelter
+    product_form: blister
+    country: Chile
+    region: Atacama
+    operator: Codelco
+    capacity_kt: 300
+    description: "Potrerillos / Altonorte area"
+    lat: -26.35
+    lon: -69.65
+
+  - id: smelter_ilo
+    commodity: copper
+    type: smelter
+    product_form: blister
+    country: Peru
+    region: Moquegua
+    operator: Southern Copper
+    capacity_kt: 320
+    lat: -17.64
+    lon: -71.34
+
+  - id: smelter_jiangxi
+    commodity: copper
+    type: smelter
+    product_form: blister
+    country: China
+    region: Jiangxi
+    operator: Jiangxi Copper
+    capacity_kt: 1200
+    lat: 28.68
+    lon: 115.86
+
+  - id: smelter_tongling
+    commodity: copper
+    type: smelter
+    product_form: blister
+    country: China
+    region: Anhui
+    operator: Tongling Nonferrous
+    capacity_kt: 900
+    lat: 30.94
+    lon: 117.81
 
   - id: smelter_shanghai
     commodity: copper
     type: smelter
+    product_form: blister
     country: China
     region: Shanghai
+    capacity_kt: 200
+    lat: 31.23
+    lon: 121.47
 
+  - id: smelter_onsan
+    commodity: copper
+    type: smelter
+    product_form: blister
+    country: South Korea
+    region: Ulsan
+    operator: LS-Nikko / Korea Zinc
+    capacity_kt: 450
+    lat: 35.43
+    lon: 129.34
+
+  - id: smelter_aurubis_hamburg
+    commodity: copper
+    type: smelter
+    product_form: blister
+    country: Germany
+    region: Hamburg
+    operator: Aurubis
+    capacity_kt: 450
+    lat: 53.52
+    lon: 10.00
+
+  - id: smelter_glencore_pas
+    commodity: copper
+    type: smelter
+    product_form: blister
+    country: Canada
+    region: Quebec
+    operator: Glencore
+    capacity_kt: 300
+    description: "Horne smelter (Rouyn-Noranda)"
+    lat: 48.24
+    lon: -79.02
+
+  # --- Refineries (blister/anode -> cathode) ---
+  - id: refinery_ventanas
+    commodity: copper
+    type: refinery
+    product_form: cathode
+    country: Chile
+    region: Valparaiso
+    operator: Codelco
+    capacity_kt: 400
+    lat: -32.74
+    lon: -71.48
+
+  - id: refinery_jiangxi
+    commodity: copper
+    type: refinery
+    product_form: cathode
+    country: China
+    region: Jiangxi
+    operator: Jiangxi Copper
+    capacity_kt: 1200
+    lat: 28.68
+    lon: 115.86
+
+  - id: refinery_tongling
+    commodity: copper
+    type: refinery
+    product_form: cathode
+    country: China
+    region: Anhui
+    operator: Tongling Nonferrous
+    capacity_kt: 900
+    lat: 30.94
+    lon: 117.81
+
+  - id: refinery_aurubis_hamburg
+    commodity: copper
+    type: refinery
+    product_form: cathode
+    country: Germany
+    region: Hamburg
+    operator: Aurubis
+    capacity_kt: 450
+    lat: 53.52
+    lon: 10.00
+
+  - id: refinery_onsan
+    commodity: copper
+    type: refinery
+    product_form: cathode
+    country: South Korea
+    region: Ulsan
+    capacity_kt: 450
+    lat: 35.43
+    lon: 129.34
+
+  # --- Consumers / end-use ---
+  - id: consumer_china_grid
+    commodity: copper
+    type: consumer
+    product_form: cathode
+    country: China
+    region: National
+    description: "Power grid / cable demand"
+
+  - id: consumer_china_ev
+    commodity: copper
+    type: consumer
+    product_form: cathode
+    country: China
+    region: National
+    description: "EV / battery / wiring harness demand"
+
+  - id: consumer_eu_industrial
+    commodity: copper
+    type: consumer
+    product_form: cathode
+    country: EU
+    region: Multi
+    description: "EU industrial / construction demand"
+
+  - id: consumer_us_construction
+    commodity: copper
+    type: consumer
+    product_form: cathode
+    country: USA
+    region: Multi
+    description: "US construction / electrical demand"
+
+  - id: consumer_korea_semis
+    commodity: copper
+    type: consumer
+    product_form: cathode
+    country: South Korea
+    region: Multi
+    description: "Wire rod / semis fabrication"
+
+  # --- Exchanges / warehouses (price discovery / stocks) ---
+  - id: exchange_lme
+    commodity: copper
+    type: exchange
+    product_form: cathode
+    country: UK
+    region: London
+    description: "London Metal Exchange copper"
+
+  - id: exchange_shfe
+    commodity: copper
+    type: exchange
+    product_form: cathode
+    country: China
+    region: Shanghai
+    description: "Shanghai Futures Exchange copper"
+
+  - id: warehouse_lme_asia
+    commodity: copper
+    type: warehouse
+    product_form: cathode
+    country: Multi
+    region: Asia
+    description: "LME warrant warehouses (Asia)"
+
+  - id: warehouse_shfe
+    commodity: copper
+    type: warehouse
+    product_form: cathode
+    country: China
+    region: Shanghai
+    description: "SHFE delivery warehouses"
+
+# ---------------------------------------------------------------------------
+# Edges (physical + commercial flows)
+# ---------------------------------------------------------------------------
 edges:
+  # Chile mines -> ports
   - source: mine_escondida
     target: port_antofagasta
     flow_type: rail_road
+    product_form: concentrate
     weight: 1.0
+    transit_days: 1
 
+  - source: mine_escondida
+    target: port_mejillones
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 0.8
+    transit_days: 1
+
+  - source: mine_collahuasi
+    target: port_iquique
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 1
+
+  - source: mine_chuquicamata
+    target: port_antofagasta
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 0.7
+    transit_days: 1
+
+  - source: mine_chuquicamata
+    target: smelter_chuquicamata
+    flow_type: inland_transport
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 0
+
+  - source: mine_el_teniente
+    target: port_san_antonio
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 2
+
+  # Peru mines -> ports / smelter
+  - source: mine_cerro_verde
+    target: port_callao
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 2
+
+  - source: mine_antamina
+    target: port_callao
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 2
+
+  - source: mine_las_bambas
+    target: port_callao
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 3
+    description: "Often disrupted by social/road blockades"
+
+  - source: mine_cerro_verde
+    target: smelter_ilo
+    flow_type: inland_transport
+    product_form: concentrate
+    weight: 0.5
+    transit_days: 2
+
+  # Africa / Indonesia / US mines
+  - source: mine_kamoa_kakula
+    target: port_durban
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 0.7
+    transit_days: 10
+    description: "Via Zambia/SA corridor"
+
+  - source: mine_kamoa_kakula
+    target: port_matadi
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 0.4
+    transit_days: 14
+
+  - source: mine_kansanshi
+    target: port_durban
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 8
+
+  - source: mine_grasberg
+    target: port_amarahapura
+    flow_type: slurry_pipeline
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 1
+
+  - source: mine_morenci
+    target: smelter_glencore_pas
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 0.4
+    transit_days: 5
+
+  - source: mine_morenci
+    target: consumer_us_construction
+    flow_type: inland_transport
+    product_form: cathode
+    weight: 0.6
+    transit_days: 3
+    description: "Domestic refined / SX-EW path simplified"
+
+  # Domestic Chilean smelting / refining
+  - source: smelter_chuquicamata
+    target: refinery_ventanas
+    flow_type: inland_transport
+    product_form: blister
+    weight: 0.8
+    transit_days: 3
+
+  - source: smelter_alho
+    target: refinery_ventanas
+    flow_type: inland_transport
+    product_form: blister
+    weight: 0.7
+    transit_days: 3
+
+  - source: port_san_antonio
+    target: refinery_ventanas
+    flow_type: inland_transport
+    product_form: concentrate
+    weight: 0.3
+    transit_days: 1
+
+  # Pacific export routes (LatAm -> Asia)
   - source: port_antofagasta
     target: maritime_route_pacific
     flow_type: shipping
+    product_form: concentrate
     weight: 1.0
+    transit_days: 1
+
+  - source: port_mejillones
+    target: maritime_route_pacific
+    flow_type: shipping
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 1
+
+  - source: port_iquique
+    target: maritime_route_pacific
+    flow_type: shipping
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 1
+
+  - source: port_callao
+    target: maritime_route_pacific
+    flow_type: shipping
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 1
 
   - source: maritime_route_pacific
     target: port_qingdao
     flow_type: shipping
+    product_form: concentrate
     weight: 1.0
+    transit_days: 30
+
+  - source: maritime_route_pacific
+    target: port_shanghai
+    flow_type: shipping
+    product_form: concentrate
+    weight: 0.8
+    transit_days: 32
+
+  - source: maritime_route_pacific
+    target: port_ningbo
+    flow_type: shipping
+    product_form: concentrate
+    weight: 0.6
+    transit_days: 31
+
+  - source: maritime_route_pacific
+    target: chokepoint_malacca
+    flow_type: shipping
+    product_form: concentrate
+    weight: 0.5
+    transit_days: 35
+    description: "Pacific via SE Asia approaches"
+
+  - source: chokepoint_malacca
+    target: port_qingdao
+    flow_type: shipping
+    product_form: concentrate
+    weight: 0.5
+    transit_days: 10
+
+  # Indonesia -> Asia
+  - source: port_amarahapura
+    target: chokepoint_malacca
+    flow_type: shipping
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 8
+
+  - source: chokepoint_malacca
+    target: port_busan
+    flow_type: shipping
+    product_form: concentrate
+    weight: 0.4
+    transit_days: 7
+
+  # Africa -> Asia / Europe via Cape / Red Sea
+  - source: port_durban
+    target: chokepoint_cape_hope
+    flow_type: shipping
+    product_form: concentrate
+    weight: 0.8
+    transit_days: 5
+
+  - source: chokepoint_cape_hope
+    target: chokepoint_malacca
+    flow_type: shipping
+    product_form: concentrate
+    weight: 0.6
+    transit_days: 20
+
+  - source: port_durban
+    target: chokepoint_bab_el_mandeb
+    flow_type: shipping
+    product_form: concentrate
+    weight: 0.4
+    transit_days: 12
+
+  - source: chokepoint_bab_el_mandeb
+    target: chokepoint_suez
+    flow_type: shipping
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 4
+
+  - source: chokepoint_suez
+    target: port_rotterdam
+    flow_type: shipping
+    product_form: concentrate
+    weight: 0.7
+    transit_days: 10
+
+  - source: chokepoint_suez
+    target: port_hamburg
+    flow_type: shipping
+    product_form: concentrate
+    weight: 0.5
+    transit_days: 12
+
+  # LatAm -> Europe / US via Panama
+  - source: port_callao
+    target: chokepoint_panama
+    flow_type: shipping
+    product_form: concentrate
+    weight: 0.3
+    transit_days: 10
+
+  - source: port_antofagasta
+    target: chokepoint_panama
+    flow_type: shipping
+    product_form: concentrate
+    weight: 0.2
+    transit_days: 12
+
+  - source: chokepoint_panama
+    target: port_rotterdam
+    flow_type: shipping
+    product_form: concentrate
+    weight: 0.5
+    transit_days: 18
+
+  - source: chokepoint_panama
+    target: consumer_us_construction
+    flow_type: shipping
+    product_form: cathode
+    weight: 0.3
+    transit_days: 8
+
+  # China ports -> smelters / refiners
+  - source: port_qingdao
+    target: smelter_jiangxi
+    flow_type: inland_transport
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 3
 
   - source: port_qingdao
+    target: smelter_tongling
+    flow_type: inland_transport
+    product_form: concentrate
+    weight: 0.8
+    transit_days: 2
+
+  - source: port_shanghai
     target: smelter_shanghai
     flow_type: inland_transport
+    product_form: concentrate
     weight: 1.0
+    transit_days: 1
+
+  - source: port_ningbo
+    target: smelter_tongling
+    flow_type: inland_transport
+    product_form: concentrate
+    weight: 0.7
+    transit_days: 2
+
+  - source: port_busan
+    target: smelter_onsan
+    flow_type: inland_transport
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 1
+
+  - source: port_hamburg
+    target: smelter_aurubis_hamburg
+    flow_type: inland_transport
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 1
+
+  - source: port_rotterdam
+    target: smelter_aurubis_hamburg
+    flow_type: inland_transport
+    product_form: concentrate
+    weight: 0.6
+    transit_days: 2
+
+  # Smelter -> refinery
+  - source: smelter_jiangxi
+    target: refinery_jiangxi
+    flow_type: plant_internal
+    product_form: blister
+    weight: 1.0
+    transit_days: 0
+
+  - source: smelter_tongling
+    target: refinery_tongling
+    flow_type: plant_internal
+    product_form: blister
+    weight: 1.0
+    transit_days: 0
+
+  - source: smelter_shanghai
+    target: refinery_jiangxi
+    flow_type: inland_transport
+    product_form: blister
+    weight: 0.5
+    transit_days: 2
+
+  - source: smelter_onsan
+    target: refinery_onsan
+    flow_type: plant_internal
+    product_form: blister
+    weight: 1.0
+    transit_days: 0
+
+  - source: smelter_aurubis_hamburg
+    target: refinery_aurubis_hamburg
+    flow_type: plant_internal
+    product_form: blister
+    weight: 1.0
+    transit_days: 0
+
+  - source: smelter_ilo
+    target: port_callao
+    flow_type: inland_transport
+    product_form: blister
+    weight: 0.6
+    transit_days: 2
+
+  # Cathode -> consumers
+  - source: refinery_jiangxi
+    target: consumer_china_grid
+    flow_type: inland_transport
+    product_form: cathode
+    weight: 1.0
+    transit_days: 3
+
+  - source: refinery_jiangxi
+    target: consumer_china_ev
+    flow_type: inland_transport
+    product_form: cathode
+    weight: 0.8
+    transit_days: 3
+
+  - source: refinery_tongling
+    target: consumer_china_grid
+    flow_type: inland_transport
+    product_form: cathode
+    weight: 0.9
+    transit_days: 2
+
+  - source: refinery_tongling
+    target: consumer_china_ev
+    flow_type: inland_transport
+    product_form: cathode
+    weight: 0.7
+    transit_days: 2
+
+  - source: refinery_onsan
+    target: consumer_korea_semis
+    flow_type: inland_transport
+    product_form: cathode
+    weight: 1.0
+    transit_days: 1
+
+  - source: refinery_aurubis_hamburg
+    target: consumer_eu_industrial
+    flow_type: inland_transport
+    product_form: cathode
+    weight: 1.0
+    transit_days: 2
+
+  - source: refinery_ventanas
+    target: port_san_antonio
+    flow_type: inland_transport
+    product_form: cathode
+    weight: 0.6
+    transit_days: 1
+
+  - source: port_san_antonio
+    target: maritime_route_pacific
+    flow_type: shipping
+    product_form: cathode
+    weight: 0.5
+    transit_days: 1
+
+  # Stocks / exchanges
+  - source: refinery_jiangxi
+    target: warehouse_shfe
+    flow_type: warehouse
+    product_form: cathode
+    weight: 0.3
+    transit_days: 2
+
+  - source: warehouse_shfe
+    target: exchange_shfe
+    flow_type: delivery
+    product_form: cathode
+    weight: 1.0
+    transit_days: 0
+
+  - source: refinery_aurubis_hamburg
+    target: warehouse_lme_asia
+    flow_type: shipping
+    product_form: cathode
+    weight: 0.2
+    transit_days: 25
+
+  - source: refinery_onsan
+    target: warehouse_lme_asia
+    flow_type: inland_transport
+    product_form: cathode
+    weight: 0.3
+    transit_days: 2
+
+  - source: warehouse_lme_asia
+    target: exchange_lme
+    flow_type: delivery
+    product_form: cathode
+    weight: 1.0
+    transit_days: 0
+
+  - source: exchange_lme
+    target: consumer_eu_industrial
+    flow_type: commercial
+    product_form: cathode
+    weight: 0.4
+    transit_days: 5
+
+  - source: exchange_shfe
+    target: consumer_china_grid
+    flow_type: commercial
+    product_form: cathode
+    weight: 0.5
+    transit_days: 2
