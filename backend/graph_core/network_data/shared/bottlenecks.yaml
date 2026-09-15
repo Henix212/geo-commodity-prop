@@ -1,35 +1,49 @@
+# Shared maritime bottlenecks — merged into every sector by builder.load_sector().
+# Referenced by commodity YAMLs (e.g. metals/copper.yaml) as edge endpoints.
 nodes:
   - id: maritime_route_pacific
     commodity: cross_metal
     type: bottleneck
     description: "Route maritime Pacifique Sud (Chili/Perou -> Asie)"
+    capacity_ships_per_day: null
+    notes: "Open-ocean corridor; capacity limited by fleet/port pairs, not a canal"
 
   - id: chokepoint_panama
     commodity: cross_metal
     type: bottleneck
-    description: "Canal de Panama (Amérique du Sud -> Asie)"
+    description: "Canal de Panama"
     country: Panama
+    capacity_ships_per_day: 36
+    capacity_notes: "Approx. neo-Panamax daily transit capacity (order of magnitude)"
 
   - id: chokepoint_malacca
     commodity: cross_metal
     type: bottleneck
-    description: "Detroit de Malacca (Asie -> Europe)"
+    description: "Detroit de Malacca"
     country: Malaysia/Indonesia/Singapore
+    capacity_ships_per_day: 200
+    capacity_notes: "High-throughput strait; congestion risk is political/piracy more than hard cap"
 
   - id: chokepoint_bab_el_mandeb
     commodity: cross_metal
     type: bottleneck
-    description: "Bab el-Mandeb (Mer Rouge -> Europe)"
+    description: "Bab el-Mandeb (Mer Rouge)"
     country: Yemen/Djibouti
+    capacity_ships_per_day: 60
+    capacity_notes: "Security-sensitive; disruptions divert traffic to Cape"
 
   - id: chokepoint_suez
     commodity: cross_metal
     type: bottleneck
-    description: "Canal de Suez (Afrique -> Europe)"
+    description: "Canal de Suez"
     country: Egypt
+    capacity_ships_per_day: 52
+    capacity_notes: "Approx. daily vessel capacity under normal operations"
 
   - id: chokepoint_cape_hope
     commodity: cross_metal
     type: bottleneck
-    description: "Cap de Bonne-Esperance (route alternative Afrique -> Europe)"
+    description: "Cap de Bonne-Esperance (route alternative Afrique)"
     country: South Africa
+    capacity_ships_per_day: null
+    notes: "Fallback route; adds ~10-14 days vs Suez on Asia-Europe"
