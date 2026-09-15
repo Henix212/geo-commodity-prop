@@ -1,6 +1,14 @@
 commodity: copper
 sector: metals
-description: "Physical copper network — mines, ports, smelters, refiners, consumers, exchanges"
+description: "Physical copper network — mines, ports, smelters, refiners, scrap, consumers, exchanges"
+
+# Bottleneck nodes (maritime_route_pacific, chokepoint_*) live in
+# shared/bottlenecks.yaml and are merged by graph_core.builder.load_sector().
+#
+# Schema conventions:
+#   - mines/smelters/refineries declare product_form (output) and accepts_forms (input)
+#   - edges declare product_form of the material moving on that link
+#   - transit_days is the mean; transit_days_min/max support Monte Carlo draws
 
 # ---------------------------------------------------------------------------
 # Nodes
@@ -83,6 +91,7 @@ nodes:
     capacity_kt: 400
     lat: 33.05
     lon: -109.33
+    description: "Also large SX-EW cathode producer on-site (see refinery_sxew_morenci)"
 
   - id: mine_grasberg
     commodity: copper
@@ -127,6 +136,40 @@ nodes:
     capacity_kt: 300
     lat: -14.08
     lon: -72.30
+    description: "Primary road to Callao often blockaded; Matarani is the operational fallback"
+
+  - id: mine_lumwana
+    commodity: copper
+    type: mine
+    product_form: concentrate
+    country: Zambia
+    region: North-Western
+    operator: Barrick
+    capacity_kt: 250
+    lat: -12.25
+    lon: 25.82
+
+  - id: mine_sentinel
+    commodity: copper
+    type: mine
+    product_form: concentrate
+    country: Zambia
+    region: North-Western
+    operator: First Quantum
+    capacity_kt: 250
+    lat: -12.25
+    lon: 25.15
+
+  - id: mine_mutanda
+    commodity: copper
+    type: mine
+    product_form: concentrate
+    country: DR Congo
+    region: Lualaba
+    operator: Glencore
+    capacity_kt: 200
+    lat: -10.78
+    lon: 25.55
 
   # --- Export ports ---
   - id: port_antofagasta
@@ -169,6 +212,15 @@ nodes:
     lat: -12.05
     lon: -77.14
 
+  - id: port_matarani
+    commodity: copper
+    type: port
+    country: Peru
+    region: Arequipa
+    lat: -16.99
+    lon: -72.10
+    description: "Southern Peru export hub; Las Bambas / Cerro Verde fallback vs Callao corridor"
+
   - id: port_matadi
     commodity: copper
     type: port
@@ -202,6 +254,14 @@ nodes:
     lat: 36.07
     lon: 120.38
 
+  - id: hub_qingdao_transship
+    commodity: copper
+    type: transshipment
+    accepts_forms: [concentrate, blister, cathode]
+    country: China
+    region: Shandong
+    description: "Explicit break-bulk / inland transfer at Qingdao before smelter rail"
+
   - id: port_shanghai
     commodity: copper
     type: port
@@ -209,6 +269,14 @@ nodes:
     region: Shanghai
     lat: 31.23
     lon: 121.47
+
+  - id: hub_shanghai_transship
+    commodity: copper
+    type: transshipment
+    accepts_forms: [concentrate, blister, cathode]
+    country: China
+    region: Shanghai
+    description: "Explicit break-bulk / inland transfer at Shanghai"
 
   - id: port_ningbo
     commodity: copper
@@ -246,6 +314,7 @@ nodes:
   - id: smelter_chuquicamata
     commodity: copper
     type: smelter
+    accepts_forms: [concentrate]
     product_form: blister
     country: Chile
     region: Antofagasta
@@ -257,6 +326,7 @@ nodes:
   - id: smelter_alho
     commodity: copper
     type: smelter
+    accepts_forms: [concentrate]
     product_form: blister
     country: Chile
     region: Atacama
@@ -269,6 +339,7 @@ nodes:
   - id: smelter_ilo
     commodity: copper
     type: smelter
+    accepts_forms: [concentrate]
     product_form: blister
     country: Peru
     region: Moquegua
@@ -280,6 +351,7 @@ nodes:
   - id: smelter_jiangxi
     commodity: copper
     type: smelter
+    accepts_forms: [concentrate, scrap]
     product_form: blister
     country: China
     region: Jiangxi
@@ -291,6 +363,7 @@ nodes:
   - id: smelter_tongling
     commodity: copper
     type: smelter
+    accepts_forms: [concentrate, scrap]
     product_form: blister
     country: China
     region: Anhui
@@ -302,6 +375,7 @@ nodes:
   - id: smelter_shanghai
     commodity: copper
     type: smelter
+    accepts_forms: [concentrate, scrap]
     product_form: blister
     country: China
     region: Shanghai
@@ -312,6 +386,7 @@ nodes:
   - id: smelter_onsan
     commodity: copper
     type: smelter
+    accepts_forms: [concentrate, scrap]
     product_form: blister
     country: South Korea
     region: Ulsan
@@ -323,6 +398,7 @@ nodes:
   - id: smelter_aurubis_hamburg
     commodity: copper
     type: smelter
+    accepts_forms: [concentrate, scrap]
     product_form: blister
     country: Germany
     region: Hamburg
@@ -334,6 +410,7 @@ nodes:
   - id: smelter_glencore_pas
     commodity: copper
     type: smelter
+    accepts_forms: [concentrate, scrap]
     product_form: blister
     country: Canada
     region: Quebec
@@ -347,6 +424,7 @@ nodes:
   - id: refinery_ventanas
     commodity: copper
     type: refinery
+    accepts_forms: [blister]
     product_form: cathode
     country: Chile
     region: Valparaiso
@@ -358,6 +436,7 @@ nodes:
   - id: refinery_jiangxi
     commodity: copper
     type: refinery
+    accepts_forms: [blister]
     product_form: cathode
     country: China
     region: Jiangxi
@@ -369,6 +448,7 @@ nodes:
   - id: refinery_tongling
     commodity: copper
     type: refinery
+    accepts_forms: [blister]
     product_form: cathode
     country: China
     region: Anhui
@@ -380,6 +460,7 @@ nodes:
   - id: refinery_aurubis_hamburg
     commodity: copper
     type: refinery
+    accepts_forms: [blister, scrap]
     product_form: cathode
     country: Germany
     region: Hamburg
@@ -391,12 +472,54 @@ nodes:
   - id: refinery_onsan
     commodity: copper
     type: refinery
+    accepts_forms: [blister]
     product_form: cathode
     country: South Korea
     region: Ulsan
     capacity_kt: 450
     lat: 35.43
     lon: 129.34
+
+  - id: refinery_sxew_morenci
+    commodity: copper
+    type: refinery
+    accepts_forms: [ore_oxide]
+    product_form: cathode
+    country: USA
+    region: Arizona
+    operator: Freeport-McMoRan
+    capacity_kt: 250
+    lat: 33.05
+    lon: -109.33
+    description: "On-site SX-EW; Morenci cathode does not require a concentrate smelter hop"
+
+  # --- Scrap / recycling (~17% of refined supply) ---
+  - id: scrap_hub_china
+    commodity: copper
+    type: scrap_hub
+    product_form: scrap
+    country: China
+    region: Multi
+    capacity_kt: 2500
+    description: "Domestic + imported copper scrap for Chinese smelters/refiners"
+
+  - id: scrap_hub_eu
+    commodity: copper
+    type: scrap_hub
+    product_form: scrap
+    country: EU
+    region: Multi
+    capacity_kt: 1200
+    description: "EU scrap collection feeding Aurubis and other recyclers"
+
+  - id: scrap_hub_us
+    commodity: copper
+    type: scrap_hub
+    product_form: scrap
+    country: USA
+    region: Multi
+    capacity_kt: 800
+    description: "US scrap / #2 copper supply"
 
   # --- Consumers / end-use ---
   - id: consumer_china_grid
@@ -463,6 +586,9 @@ nodes:
     country: Multi
     region: Asia
     description: "LME warrant warehouses (Asia)"
+    stock_level_kt: 120
+    stock_level_kt_min: 80
+    stock_level_kt_max: 160
 
   - id: warehouse_shfe
     commodity: copper
@@ -471,6 +597,28 @@ nodes:
     country: China
     region: Shanghai
     description: "SHFE delivery warehouses"
+    stock_level_kt: 90
+    stock_level_kt_min: 40
+    stock_level_kt_max: 200
+
+  - id: warehouse_comex
+    commodity: copper
+    type: warehouse
+    product_form: cathode
+    country: USA
+    region: Multi
+    description: "COMEX / CME copper warehouses"
+    stock_level_kt: 30
+    stock_level_kt_min: 10
+    stock_level_kt_max: 80
+
+  - id: exchange_comex
+    commodity: copper
+    type: exchange
+    product_form: cathode
+    country: USA
+    region: New York
+    description: "COMEX copper futures"
 
 # ---------------------------------------------------------------------------
 # Edges (physical + commercial flows)
@@ -538,9 +686,30 @@ edges:
     target: port_callao
     flow_type: rail_road
     product_form: concentrate
-    weight: 1.0
+    weight: 0.6
     transit_days: 3
-    description: "Often disrupted by social/road blockades"
+    transit_days_min: 2
+    transit_days_max: 10
+    description: "Primary corridor; often disrupted by social/road blockades"
+
+  - source: mine_las_bambas
+    target: port_matarani
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 0.8
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
+    description: "Operational fallback when Callao corridor is blocked"
+
+  - source: mine_cerro_verde
+    target: port_matarani
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 0.7
+    transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 2
 
   - source: mine_cerro_verde
     target: smelter_ilo
@@ -571,6 +740,44 @@ edges:
     product_form: concentrate
     weight: 1.0
     transit_days: 8
+    transit_days_min: 6
+    transit_days_max: 14
+
+  - source: mine_lumwana
+    target: port_durban
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 9
+    transit_days_min: 7
+    transit_days_max: 15
+
+  - source: mine_sentinel
+    target: port_durban
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 9
+    transit_days_min: 7
+    transit_days_max: 15
+
+  - source: mine_mutanda
+    target: port_durban
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 0.7
+    transit_days: 11
+    transit_days_min: 8
+    transit_days_max: 18
+
+  - source: mine_mutanda
+    target: port_matadi
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 0.4
+    transit_days: 14
+    transit_days_min: 10
+    transit_days_max: 21
 
   - source: mine_grasberg
     target: port_amarahapura
@@ -585,14 +792,32 @@ edges:
     product_form: concentrate
     weight: 0.4
     transit_days: 5
+    transit_days_min: 3
+    transit_days_max: 8
 
   - source: mine_morenci
+    target: refinery_sxew_morenci
+    flow_type: plant_internal
+    product_form: ore_oxide
+    weight: 0.6
+    transit_days: 0
+    description: "SX-EW leach path on-site"
+
+  - source: refinery_sxew_morenci
     target: consumer_us_construction
     flow_type: inland_transport
     product_form: cathode
-    weight: 0.6
+    weight: 0.7
     transit_days: 3
-    description: "Domestic refined / SX-EW path simplified"
+    transit_days_min: 2
+    transit_days_max: 5
+
+  - source: refinery_sxew_morenci
+    target: warehouse_comex
+    flow_type: warehouse
+    product_form: cathode
+    weight: 0.3
+    transit_days: 2
 
   # Domestic Chilean smelting / refining
   - source: smelter_chuquicamata
@@ -610,11 +835,14 @@ edges:
     transit_days: 3
 
   - source: port_san_antonio
-    target: refinery_ventanas
+    target: smelter_alho
     flow_type: inland_transport
     product_form: concentrate
     weight: 0.3
-    transit_days: 1
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
+    description: "Coastal concentrate feed to northern Chile smelting (not direct to Ventanas refinery)"
 
   # Pacific export routes (LatAm -> Asia)
   - source: port_antofagasta
@@ -644,6 +872,17 @@ edges:
     product_form: concentrate
     weight: 1.0
     transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 2
+
+  - source: port_matarani
+    target: maritime_route_pacific
+    flow_type: shipping
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 2
 
   - source: maritime_route_pacific
     target: port_qingdao
@@ -651,6 +890,8 @@ edges:
     product_form: concentrate
     weight: 1.0
     transit_days: 30
+    transit_days_min: 25
+    transit_days_max: 40
 
   - source: maritime_route_pacific
     target: port_shanghai
@@ -658,6 +899,8 @@ edges:
     product_form: concentrate
     weight: 0.8
     transit_days: 32
+    transit_days_min: 26
+    transit_days_max: 42
 
   - source: maritime_route_pacific
     target: port_ningbo
@@ -665,6 +908,8 @@ edges:
     product_form: concentrate
     weight: 0.6
     transit_days: 31
+    transit_days_min: 25
+    transit_days_max: 41
 
   - source: maritime_route_pacific
     target: chokepoint_malacca
@@ -710,6 +955,8 @@ edges:
     product_form: concentrate
     weight: 0.6
     transit_days: 20
+    transit_days_min: 16
+    transit_days_max: 28
 
   - source: port_durban
     target: chokepoint_bab_el_mandeb
@@ -731,6 +978,8 @@ edges:
     product_form: concentrate
     weight: 0.7
     transit_days: 10
+    transit_days_min: 8
+    transit_days_max: 16
 
   - source: chokepoint_suez
     target: port_hamburg
@@ -762,33 +1011,83 @@ edges:
     transit_days: 18
 
   - source: chokepoint_panama
-    target: consumer_us_construction
+    target: warehouse_comex
     flow_type: shipping
     product_form: cathode
     weight: 0.3
     transit_days: 8
+    transit_days_min: 6
+    transit_days_max: 14
 
-  # China ports -> smelters / refiners
+  - source: warehouse_comex
+    target: exchange_comex
+    flow_type: delivery
+    product_form: cathode
+    weight: 1.0
+    transit_days: 0
+
+  - source: warehouse_comex
+    target: consumer_us_construction
+    flow_type: inland_transport
+    product_form: cathode
+    weight: 0.8
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
+
+  - source: exchange_comex
+    target: consumer_us_construction
+    flow_type: commercial
+    product_form: cathode
+    weight: 0.4
+    transit_days: 1
+
+  # China ports -> transshipment -> smelters
   - source: port_qingdao
+    target: hub_qingdao_transship
+    flow_type: transshipment
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 1
+    transit_days_min: 0
+    transit_days_max: 3
+    description: "Break-bulk / inland transfer at Qingdao"
+
+  - source: hub_qingdao_transship
     target: smelter_jiangxi
     flow_type: inland_transport
     product_form: concentrate
     weight: 1.0
     transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 5
 
-  - source: port_qingdao
+  - source: hub_qingdao_transship
     target: smelter_tongling
     flow_type: inland_transport
     product_form: concentrate
     weight: 0.8
     transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
 
   - source: port_shanghai
+    target: hub_shanghai_transship
+    flow_type: transshipment
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 1
+    transit_days_min: 0
+    transit_days_max: 2
+
+  - source: hub_shanghai_transship
     target: smelter_shanghai
     flow_type: inland_transport
     product_form: concentrate
     weight: 1.0
     transit_days: 1
+    transit_days_min: 0
+    transit_days_max: 2
 
   - source: port_ningbo
     target: smelter_tongling
@@ -917,6 +1216,65 @@ edges:
     product_form: cathode
     weight: 0.5
     transit_days: 1
+
+  # Scrap / recycling supply
+  - source: scrap_hub_china
+    target: smelter_jiangxi
+    flow_type: inland_transport
+    product_form: scrap
+    weight: 0.5
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 5
+
+  - source: scrap_hub_china
+    target: smelter_tongling
+    flow_type: inland_transport
+    product_form: scrap
+    weight: 0.4
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 5
+
+  - source: scrap_hub_china
+    target: consumer_china_grid
+    flow_type: inland_transport
+    product_form: scrap
+    weight: 0.3
+    transit_days: 2
+    description: "Direct remelt / rod mills from scrap"
+
+  - source: scrap_hub_eu
+    target: smelter_aurubis_hamburg
+    flow_type: inland_transport
+    product_form: scrap
+    weight: 0.7
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
+
+  - source: scrap_hub_eu
+    target: refinery_aurubis_hamburg
+    flow_type: inland_transport
+    product_form: scrap
+    weight: 0.5
+    transit_days: 1
+
+  - source: scrap_hub_us
+    target: smelter_glencore_pas
+    flow_type: rail_road
+    product_form: scrap
+    weight: 0.4
+    transit_days: 4
+    transit_days_min: 2
+    transit_days_max: 7
+
+  - source: scrap_hub_us
+    target: consumer_us_construction
+    flow_type: inland_transport
+    product_form: scrap
+    weight: 0.5
+    transit_days: 2
 
   # Stocks / exchanges
   - source: refinery_jiangxi
