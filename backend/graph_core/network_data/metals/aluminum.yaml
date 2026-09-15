@@ -1,6 +1,531 @@
 commodity: aluminum
 sector: metals
+description: "Physical aluminum network — bauxite → alumina → smelter → semis"
 
-nodes: []
+# Bottlenecks from shared/bottlenecks.yaml merged by builder.load_sector().
 
-edges: []
+nodes:
+  # --- Bauxite mines ---
+  - id: mine_weipa
+    commodity: aluminum
+    type: mine
+    product_form: bauxite
+    country: Australia
+    region: Queensland
+    operator: Rio Tinto
+    capacity_kt: 35000
+    lat: -12.63
+    lon: 141.88
+
+  - id: mine_sangaredi
+    commodity: aluminum
+    type: mine
+    product_form: bauxite
+    country: Guinea
+    region: Boke
+    operator: CBG / Emirati-Chinese JVs
+    capacity_kt: 15000
+    lat: 11.10
+    lon: -13.77
+
+  - id: mine_paragominas
+    commodity: aluminum
+    type: mine
+    product_form: bauxite
+    country: Brazil
+    region: Para
+    operator: Hydro
+    capacity_kt: 10000
+    lat: -3.00
+    lon: -47.50
+
+  - id: mine_jamaica_bauxite
+    commodity: aluminum
+    type: mine
+    product_form: bauxite
+    country: Jamaica
+    region: Multi
+    capacity_kt: 7000
+    lat: 18.15
+    lon: -77.30
+
+  # --- Alumina refineries ---
+  - id: alumina_gladstone
+    commodity: aluminum
+    type: alumina_refinery
+    accepts_forms: [bauxite]
+    product_form: alumina
+    country: Australia
+    region: Queensland
+    operator: Rio Tinto
+    capacity_kt: 9000
+    lat: -23.85
+    lon: 151.26
+
+  - id: alumina_aughinish
+    commodity: aluminum
+    type: alumina_refinery
+    accepts_forms: [bauxite]
+    product_form: alumina
+    country: Ireland
+    region: Limerick
+    operator: Rusal
+    capacity_kt: 1900
+    lat: 52.62
+    lon: -9.06
+
+  - id: alumina_sao_luis
+    commodity: aluminum
+    type: alumina_refinery
+    accepts_forms: [bauxite]
+    product_form: alumina
+    country: Brazil
+    region: Maranhao
+    operator: Alunorte / Hydro
+    capacity_kt: 6500
+    lat: -2.53
+    lon: -44.30
+
+  - id: alumina_guinea_coast
+    commodity: aluminum
+    type: alumina_refinery
+    accepts_forms: [bauxite]
+    product_form: alumina
+    country: Guinea
+    region: Coastal
+    capacity_kt: 2000
+    description: "Emerging coastal alumina capacity / export mix"
+
+  # --- Ports ---
+  - id: port_weipa
+    commodity: aluminum
+    type: port
+    country: Australia
+    region: Queensland
+    lat: -12.68
+    lon: 141.85
+
+  - id: port_kamsar
+    commodity: aluminum
+    type: port
+    country: Guinea
+    region: Boke
+    lat: 10.65
+    lon: -14.62
+
+  - id: port_vila_do_conde
+    commodity: aluminum
+    type: port
+    country: Brazil
+    region: Para
+    lat: -1.54
+    lon: -48.75
+
+  - id: port_gladstone
+    commodity: aluminum
+    type: port
+    country: Australia
+    region: Queensland
+    lat: -23.84
+    lon: 151.25
+
+  - id: port_rotterdam_alu
+    commodity: aluminum
+    type: port
+    country: Netherlands
+    region: South Holland
+    lat: 51.95
+    lon: 4.14
+
+  - id: port_qingdao_alu
+    commodity: aluminum
+    type: port
+    country: China
+    region: Shandong
+    lat: 36.07
+    lon: 120.38
+
+  - id: port_dubai_jebel_ali
+    commodity: aluminum
+    type: port
+    country: UAE
+    region: Dubai
+    lat: 25.01
+    lon: 55.06
+
+  # --- Smelters (alumina → primary aluminum) ---
+  - id: smelter_boyne
+    commodity: aluminum
+    type: smelter
+    accepts_forms: [alumina]
+    product_form: primary_ingot
+    country: Australia
+    region: Queensland
+    operator: Rio Tinto
+    capacity_kt: 570
+    lat: -23.94
+    lon: 151.30
+
+  - id: smelter_kitimat
+    commodity: aluminum
+    type: smelter
+    accepts_forms: [alumina]
+    product_form: primary_ingot
+    country: Canada
+    region: BC
+    operator: Rio Tinto
+    capacity_kt: 420
+    lat: 54.05
+    lon: -128.65
+
+  - id: smelter_emirates_global
+    commodity: aluminum
+    type: smelter
+    accepts_forms: [alumina]
+    product_form: primary_ingot
+    country: UAE
+    region: Abu Dhabi / Dubai
+    operator: EGAs
+    capacity_kt: 2600
+    lat: 24.20
+    lon: 54.70
+
+  - id: smelter_china_shandong
+    commodity: aluminum
+    type: smelter
+    accepts_forms: [alumina, scrap]
+    product_form: primary_ingot
+    country: China
+    region: Shandong
+    capacity_kt: 8000
+    description: "Aggregated China primary capacity proxy (Shandong hub)"
+
+  - id: smelter_iceland
+    commodity: aluminum
+    type: smelter
+    accepts_forms: [alumina]
+    product_form: primary_ingot
+    country: Iceland
+    region: Multi
+    operator: Alcoa / Rio / Century
+    capacity_kt: 800
+    lat: 64.00
+    lon: -21.90
+
+  # --- Scrap / consumers / exchange ---
+  - id: scrap_hub_alu_china
+    commodity: aluminum
+    type: scrap_hub
+    product_form: scrap
+    country: China
+    region: Multi
+    capacity_kt: 5000
+
+  - id: scrap_hub_alu_eu
+    commodity: aluminum
+    type: scrap_hub
+    product_form: scrap
+    country: EU
+    region: Multi
+    capacity_kt: 3000
+
+  - id: consumer_alu_china_construction
+    commodity: aluminum
+    type: consumer
+    product_form: primary_ingot
+    country: China
+    region: National
+
+  - id: consumer_alu_ev_autos
+    commodity: aluminum
+    type: consumer
+    product_form: primary_ingot
+    country: Multi
+    region: Global
+    description: "Auto / EV lightweighting demand"
+
+  - id: consumer_alu_eu_packaging
+    commodity: aluminum
+    type: consumer
+    product_form: primary_ingot
+    country: EU
+    region: Multi
+
+  - id: exchange_lme_alu
+    commodity: aluminum
+    type: exchange
+    product_form: primary_ingot
+    country: UK
+    region: London
+
+  - id: warehouse_lme_alu
+    commodity: aluminum
+    type: warehouse
+    product_form: primary_ingot
+    country: Multi
+    region: Global
+    stock_level_kt: 500
+    stock_level_kt_min: 200
+    stock_level_kt_max: 1200
+
+edges:
+  - source: mine_weipa
+    target: port_weipa
+    flow_type: rail_road
+    product_form: bauxite
+    weight: 1.0
+    transit_days: 1
+
+  - source: port_weipa
+    target: alumina_gladstone
+    flow_type: coastal_shipping
+    product_form: bauxite
+    weight: 0.7
+    transit_days: 5
+    transit_days_min: 3
+    transit_days_max: 8
+
+  - source: mine_weipa
+    target: alumina_gladstone
+    flow_type: inland_transport
+    product_form: bauxite
+    weight: 0.5
+    transit_days: 3
+
+  - source: mine_sangaredi
+    target: port_kamsar
+    flow_type: rail_road
+    product_form: bauxite
+    weight: 1.0
+    transit_days: 1
+
+  - source: port_kamsar
+    target: chokepoint_gibraltar
+    flow_type: shipping
+    product_form: bauxite
+    weight: 0.5
+    transit_days: 12
+    transit_days_min: 10
+    transit_days_max: 18
+
+  - source: port_kamsar
+    target: chokepoint_cape_hope
+    flow_type: shipping
+    product_form: bauxite
+    weight: 0.5
+    transit_days: 20
+    transit_days_min: 16
+    transit_days_max: 28
+
+  - source: chokepoint_gibraltar
+    target: alumina_aughinish
+    flow_type: shipping
+    product_form: bauxite
+    weight: 0.6
+    transit_days: 4
+
+  - source: chokepoint_cape_hope
+    target: chokepoint_malacca
+    flow_type: shipping
+    product_form: bauxite
+    weight: 0.4
+    transit_days: 18
+
+  - source: chokepoint_malacca
+    target: port_qingdao_alu
+    flow_type: shipping
+    product_form: bauxite
+    weight: 0.5
+    transit_days: 10
+
+  - source: mine_paragominas
+    target: alumina_sao_luis
+    flow_type: slurry_pipeline
+    product_form: bauxite
+    weight: 1.0
+    transit_days: 2
+
+  - source: alumina_sao_luis
+    target: port_vila_do_conde
+    flow_type: inland_transport
+    product_form: alumina
+    weight: 1.0
+    transit_days: 1
+
+  - source: port_vila_do_conde
+    target: chokepoint_panama
+    flow_type: shipping
+    product_form: alumina
+    weight: 0.4
+    transit_days: 14
+
+  - source: port_vila_do_conde
+    target: chokepoint_gibraltar
+    flow_type: shipping
+    product_form: alumina
+    weight: 0.5
+    transit_days: 12
+
+  - source: alumina_gladstone
+    target: port_gladstone
+    flow_type: inland_transport
+    product_form: alumina
+    weight: 1.0
+    transit_days: 1
+
+  - source: port_gladstone
+    target: maritime_route_pacific
+    flow_type: shipping
+    product_form: alumina
+    weight: 0.6
+    transit_days: 1
+
+  - source: maritime_route_pacific
+    target: port_qingdao_alu
+    flow_type: shipping
+    product_form: alumina
+    weight: 0.7
+    transit_days: 18
+    transit_days_min: 14
+    transit_days_max: 25
+
+  - source: alumina_gladstone
+    target: smelter_boyne
+    flow_type: plant_internal
+    product_form: alumina
+    weight: 0.8
+    transit_days: 0
+
+  - source: port_qingdao_alu
+    target: smelter_china_shandong
+    flow_type: inland_transport
+    product_form: alumina
+    weight: 1.0
+    transit_days: 2
+
+  - source: alumina_aughinish
+    target: port_rotterdam_alu
+    flow_type: shipping
+    product_form: alumina
+    weight: 0.5
+    transit_days: 3
+
+  - source: port_rotterdam_alu
+    target: smelter_iceland
+    flow_type: shipping
+    product_form: alumina
+    weight: 0.6
+    transit_days: 5
+
+  - source: chokepoint_panama
+    target: smelter_kitimat
+    flow_type: shipping
+    product_form: alumina
+    weight: 0.4
+    transit_days: 10
+
+  - source: port_dubai_jebel_ali
+    target: smelter_emirates_global
+    flow_type: inland_transport
+    product_form: alumina
+    weight: 1.0
+    transit_days: 1
+
+  - source: chokepoint_hormuz
+    target: port_dubai_jebel_ali
+    flow_type: shipping
+    product_form: alumina
+    weight: 0.5
+    transit_days: 2
+
+  - source: chokepoint_gibraltar
+    target: chokepoint_hormuz
+    flow_type: shipping
+    product_form: alumina
+    weight: 0.3
+    transit_days: 14
+    description: "Atlantic/Med alumina toward Gulf smelters"
+
+  - source: smelter_boyne
+    target: maritime_route_pacific
+    flow_type: shipping
+    product_form: primary_ingot
+    weight: 0.5
+    transit_days: 1
+
+  - source: smelter_china_shandong
+    target: consumer_alu_china_construction
+    flow_type: inland_transport
+    product_form: primary_ingot
+    weight: 1.0
+    transit_days: 3
+
+  - source: smelter_china_shandong
+    target: consumer_alu_ev_autos
+    flow_type: inland_transport
+    product_form: primary_ingot
+    weight: 0.6
+    transit_days: 3
+
+  - source: smelter_emirates_global
+    target: consumer_alu_ev_autos
+    flow_type: shipping
+    product_form: primary_ingot
+    weight: 0.5
+    transit_days: 20
+
+  - source: smelter_iceland
+    target: consumer_alu_eu_packaging
+    flow_type: shipping
+    product_form: primary_ingot
+    weight: 1.0
+    transit_days: 5
+
+  - source: smelter_kitimat
+    target: consumer_alu_ev_autos
+    flow_type: rail_road
+    product_form: primary_ingot
+    weight: 0.5
+    transit_days: 7
+
+  - source: scrap_hub_alu_china
+    target: smelter_china_shandong
+    flow_type: inland_transport
+    product_form: scrap
+    weight: 0.5
+    transit_days: 2
+
+  - source: scrap_hub_alu_eu
+    target: consumer_alu_eu_packaging
+    flow_type: inland_transport
+    product_form: scrap
+    weight: 0.4
+    transit_days: 2
+
+  - source: smelter_emirates_global
+    target: warehouse_lme_alu
+    flow_type: warehouse
+    product_form: primary_ingot
+    weight: 0.2
+    transit_days: 15
+
+  - source: smelter_iceland
+    target: warehouse_lme_alu
+    flow_type: warehouse
+    product_form: primary_ingot
+    weight: 0.3
+    transit_days: 5
+
+  - source: warehouse_lme_alu
+    target: exchange_lme_alu
+    flow_type: delivery
+    product_form: primary_ingot
+    weight: 1.0
+    transit_days: 0
+
+  - source: exchange_lme_alu
+    target: consumer_alu_eu_packaging
+    flow_type: commercial
+    product_form: primary_ingot
+    weight: 0.4
+    transit_days: 3

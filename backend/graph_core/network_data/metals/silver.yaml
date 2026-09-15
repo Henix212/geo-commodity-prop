@@ -1,0 +1,341 @@
+commodity: silver
+sector: metals
+description: "Physical silver network — mines → refiners → vaults / industrial / jewelry demand"
+
+nodes:
+  - id: mine_penasquito
+    commodity: silver
+    type: mine
+    product_form: concentrate
+    country: Mexico
+    region: Zacatecas
+    operator: Newmont
+    capacity_kt: 1.5
+    lat: 24.80
+    lon: -101.70
+
+  - id: mine_antamina_ag
+    commodity: silver
+    type: mine
+    product_form: concentrate
+    country: Peru
+    region: Ancash
+    operator: Glencore / BHP / Teck / Mitsubishi
+    capacity_kt: 0.5
+    description: "Silver as by-product of copper/zinc"
+
+  - id: mine_saucito
+    commodity: silver
+    type: mine
+    product_form: doré
+    country: Mexico
+    region: Zacatecas
+    operator: Fresnillo
+    capacity_kt: 0.6
+    lat: 22.78
+    lon: -102.58
+
+  - id: mine_kachkanar_ag
+    commodity: silver
+    type: mine
+    product_form: concentrate
+    country: Russia
+    region: Multi
+    capacity_kt: 0.4
+    description: "Russia primary/by-product silver proxy"
+
+  - id: mine_china_ag
+    commodity: silver
+    type: mine
+    product_form: concentrate
+    country: China
+    region: Multi
+    capacity_kt: 1.2
+    description: "Aggregated China mine silver"
+
+  - id: mine_australia_cannington
+    commodity: silver
+    type: mine
+    product_form: concentrate
+    country: Australia
+    region: Queensland
+    operator: South32
+    capacity_kt: 0.8
+    lat: -21.86
+    lon: 140.91
+
+  - id: refinery_fresnillo
+    commodity: silver
+    type: refinery
+    accepts_forms: [concentrate, doré]
+    product_form: bullion
+    country: Mexico
+    region: Zacatecas
+    capacity_kt: 2.0
+
+  - id: refinery_peru_cajamarquilla
+    commodity: silver
+    type: refinery
+    accepts_forms: [concentrate]
+    product_form: bullion
+    country: Peru
+    region: Lima
+    capacity_kt: 0.8
+
+  - id: refinery_china_ag
+    commodity: silver
+    type: refinery
+    accepts_forms: [concentrate, doré, scrap]
+    product_form: bullion
+    country: China
+    region: Multi
+    capacity_kt: 3.0
+
+  - id: refinery_perth_mint_ag
+    commodity: silver
+    type: refinery
+    accepts_forms: [doré, scrap, concentrate]
+    product_form: bullion
+    country: Australia
+    region: WA
+    capacity_kt: 0.5
+
+  - id: port_manzanillo
+    commodity: silver
+    type: port
+    country: Mexico
+    region: Colima
+    lat: 19.05
+    lon: -104.32
+
+  - id: port_callao_ag
+    commodity: silver
+    type: port
+    country: Peru
+    region: Lima
+    lat: -12.05
+    lon: -77.14
+
+  - id: port_shanghai_ag
+    commodity: silver
+    type: port
+    country: China
+    region: Shanghai
+    lat: 31.23
+    lon: 121.47
+
+  - id: vault_comex_ag
+    commodity: silver
+    type: warehouse
+    product_form: bullion
+    country: USA
+    region: Multi
+    stock_level_kt: 8.0
+    stock_level_kt_min: 5.0
+    stock_level_kt_max: 15.0
+
+  - id: vault_lbma_ag
+    commodity: silver
+    type: warehouse
+    product_form: bullion
+    country: UK
+    region: London
+    stock_level_kt: 30.0
+    stock_level_kt_min: 20.0
+    stock_level_kt_max: 40.0
+
+  - id: exchange_comex_ag
+    commodity: silver
+    type: exchange
+    product_form: bullion
+    country: USA
+    region: New York
+
+  - id: exchange_lbma_ag
+    commodity: silver
+    type: exchange
+    product_form: bullion
+    country: UK
+    region: London
+
+  - id: consumer_ag_solar
+    commodity: silver
+    type: consumer
+    product_form: bullion
+    country: Multi
+    region: Global
+    description: "PV paste / solar industrial demand"
+
+  - id: consumer_ag_electronics
+    commodity: silver
+    type: consumer
+    product_form: bullion
+    country: Multi
+    region: Global
+
+  - id: consumer_ag_jewelry
+    commodity: silver
+    type: consumer
+    product_form: bullion
+    country: Multi
+    region: Global
+
+  - id: scrap_hub_ag
+    commodity: silver
+    type: scrap_hub
+    product_form: scrap
+    country: Multi
+    region: Global
+    capacity_kt: 5.0
+
+edges:
+  - source: mine_penasquito
+    target: refinery_fresnillo
+    flow_type: inland_transport
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 2
+
+  - source: mine_saucito
+    target: refinery_fresnillo
+    flow_type: inland_transport
+    product_form: doré
+    weight: 1.0
+    transit_days: 1
+
+  - source: mine_antamina_ag
+    target: port_callao_ag
+    flow_type: rail_road
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 2
+
+  - source: port_callao_ag
+    target: maritime_route_pacific
+    flow_type: shipping
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 1
+
+  - source: maritime_route_pacific
+    target: port_shanghai_ag
+    flow_type: shipping
+    product_form: concentrate
+    weight: 0.6
+    transit_days: 28
+    transit_days_min: 22
+    transit_days_max: 35
+
+  - source: port_shanghai_ag
+    target: refinery_china_ag
+    flow_type: inland_transport
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 2
+
+  - source: mine_china_ag
+    target: refinery_china_ag
+    flow_type: inland_transport
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 3
+
+  - source: mine_australia_cannington
+    target: refinery_perth_mint_ag
+    flow_type: inland_transport
+    product_form: concentrate
+    weight: 0.5
+    transit_days: 5
+
+  - source: mine_australia_cannington
+    target: maritime_route_pacific
+    flow_type: shipping
+    product_form: concentrate
+    weight: 0.5
+    transit_days: 8
+
+  - source: refinery_fresnillo
+    target: port_manzanillo
+    flow_type: inland_transport
+    product_form: bullion
+    weight: 0.7
+    transit_days: 2
+
+  - source: port_manzanillo
+    target: chokepoint_panama
+    flow_type: shipping
+    product_form: bullion
+    weight: 0.8
+    transit_days: 5
+
+  - source: chokepoint_panama
+    target: vault_comex_ag
+    flow_type: shipping
+    product_form: bullion
+    weight: 0.6
+    transit_days: 7
+    transit_days_min: 5
+    transit_days_max: 12
+
+  - source: refinery_fresnillo
+    target: vault_lbma_ag
+    flow_type: shipping
+    product_form: bullion
+    weight: 0.4
+    transit_days: 15
+
+  - source: refinery_china_ag
+    target: consumer_ag_solar
+    flow_type: inland_transport
+    product_form: bullion
+    weight: 0.8
+    transit_days: 2
+
+  - source: refinery_china_ag
+    target: consumer_ag_electronics
+    flow_type: inland_transport
+    product_form: bullion
+    weight: 0.6
+    transit_days: 2
+
+  - source: vault_comex_ag
+    target: exchange_comex_ag
+    flow_type: delivery
+    product_form: bullion
+    weight: 1.0
+    transit_days: 0
+
+  - source: vault_lbma_ag
+    target: exchange_lbma_ag
+    flow_type: delivery
+    product_form: bullion
+    weight: 1.0
+    transit_days: 0
+
+  - source: exchange_comex_ag
+    target: consumer_ag_jewelry
+    flow_type: commercial
+    product_form: bullion
+    weight: 0.3
+    transit_days: 2
+
+  - source: exchange_lbma_ag
+    target: consumer_ag_jewelry
+    flow_type: commercial
+    product_form: bullion
+    weight: 0.4
+    transit_days: 2
+
+  - source: scrap_hub_ag
+    target: refinery_china_ag
+    flow_type: inland_transport
+    product_form: scrap
+    weight: 0.4
+    transit_days: 5
+
+  - source: scrap_hub_ag
+    target: refinery_perth_mint_ag
+    flow_type: shipping
+    product_form: scrap
+    weight: 0.2
+    transit_days: 20

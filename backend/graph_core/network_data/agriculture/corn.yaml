@@ -1,6 +1,419 @@
 commodity: corn
 sector: agriculture
+description: "Corn / maize network — US Midwest, Brazil, Ukraine → feed / ethanol / export"
 
-nodes: []
+nodes:
+  - id: region_us_midwest_corn
+    commodity: corn
+    type: producing_region
+    product_form: grain
+    country: USA
+    region: Midwest
+    capacity_kt: 350000
+    lat: 41.00
+    lon: -93.00
 
-edges: []
+  - id: region_brazil_cerrado_corn
+    commodity: corn
+    type: producing_region
+    product_form: grain
+    country: Brazil
+    region: Mato Grosso / Cerrado
+    capacity_kt: 120000
+    lat: -12.50
+    lon: -55.50
+
+  - id: region_ukraine_corn
+    commodity: corn
+    type: producing_region
+    product_form: grain
+    country: Ukraine
+    region: Multi
+    capacity_kt: 35000
+    lat: 48.50
+    lon: 32.00
+
+  - id: region_argentina_corn
+    commodity: corn
+    type: producing_region
+    product_form: grain
+    country: Argentina
+    region: Pampas
+    capacity_kt: 50000
+    lat: -33.00
+    lon: -62.00
+
+  - id: region_china_corn
+    commodity: corn
+    type: producing_region
+    product_form: grain
+    country: China
+    region: Northeast
+    capacity_kt: 270000
+    lat: 45.00
+    lon: 125.00
+
+  - id: silo_us_midwest
+    commodity: corn
+    type: silo
+    accepts_forms: [grain]
+    product_form: grain
+    country: USA
+    region: Midwest
+    stock_level_kt: 40000
+
+  - id: silo_brazil_interior
+    commodity: corn
+    type: silo
+    accepts_forms: [grain]
+    product_form: grain
+    country: Brazil
+    region: Mato Grosso
+    stock_level_kt: 15000
+
+  - id: port_new_orleans_corn
+    commodity: corn
+    type: port
+    country: USA
+    region: Louisiana
+    lat: 29.93
+    lon: -90.07
+
+  - id: port_santos_corn
+    commodity: corn
+    type: port
+    country: Brazil
+    region: Sao Paulo
+    lat: -23.95
+    lon: -46.33
+
+  - id: port_parana_corn
+    commodity: corn
+    type: port
+    country: Brazil
+    region: Paranagua
+    lat: -25.52
+    lon: -48.52
+
+  - id: port_odessa_corn
+    commodity: corn
+    type: port
+    country: Ukraine
+    region: Odessa
+    lat: 46.48
+    lon: 30.73
+
+  - id: port_rosario_corn
+    commodity: corn
+    type: port
+    country: Argentina
+    region: Santa Fe
+    lat: -32.95
+    lon: -60.64
+
+  - id: port_dalian_corn
+    commodity: corn
+    type: port
+    country: China
+    region: Liaoning
+    lat: 38.92
+    lon: 121.64
+
+  - id: port_south_china_corn
+    commodity: corn
+    type: port
+    country: China
+    region: South
+    lat: 23.10
+    lon: 113.25
+
+  - id: ethanol_us
+    commodity: corn
+    type: processor
+    accepts_forms: [grain]
+    product_form: ethanol
+    country: USA
+    region: Midwest
+    capacity_kt: 50000
+
+  - id: feed_mill_china
+    commodity: corn
+    type: processor
+    accepts_forms: [grain]
+    product_form: feed
+    country: China
+    region: National
+    capacity_kt: 80000
+
+  - id: feed_mill_eu
+    commodity: corn
+    type: processor
+    accepts_forms: [grain]
+    product_form: feed
+    country: EU
+    region: Multi
+    capacity_kt: 30000
+
+  - id: feed_mill_mexico
+    commodity: corn
+    type: processor
+    accepts_forms: [grain]
+    product_form: feed
+    country: Mexico
+    region: National
+    capacity_kt: 20000
+
+  - id: consumer_corn_feed_asia
+    commodity: corn
+    type: consumer
+    product_form: feed
+    country: Asia
+    region: Multi
+
+  - id: consumer_corn_feed_americas
+    commodity: corn
+    type: consumer
+    product_form: feed
+    country: Americas
+    region: Multi
+
+  - id: consumer_corn_ethanol_us
+    commodity: corn
+    type: consumer
+    product_form: ethanol
+    country: USA
+    region: National
+
+  - id: exchange_cbot_corn
+    commodity: corn
+    type: exchange
+    product_form: grain
+    country: USA
+    region: Chicago
+
+edges:
+  - source: region_us_midwest_corn
+    target: silo_us_midwest
+    flow_type: rail_road
+    product_form: grain
+    weight: 1.0
+    transit_days: 3
+
+  - source: silo_us_midwest
+    target: port_new_orleans_corn
+    flow_type: barge
+    product_form: grain
+    weight: 0.6
+    transit_days: 7
+    transit_days_min: 5
+    transit_days_max: 14
+    description: "Mississippi river barge corridor"
+
+  - source: silo_us_midwest
+    target: ethanol_us
+    flow_type: inland_transport
+    product_form: grain
+    weight: 0.5
+    transit_days: 2
+
+  - source: ethanol_us
+    target: consumer_corn_ethanol_us
+    flow_type: inland_transport
+    product_form: ethanol
+    weight: 1.0
+    transit_days: 2
+
+  - source: port_new_orleans_corn
+    target: chokepoint_panama
+    flow_type: shipping
+    product_form: grain
+    weight: 0.4
+    transit_days: 8
+
+  - source: port_new_orleans_corn
+    target: feed_mill_mexico
+    flow_type: shipping
+    product_form: grain
+    weight: 0.3
+    transit_days: 5
+
+  - source: port_new_orleans_corn
+    target: chokepoint_gibraltar
+    flow_type: shipping
+    product_form: grain
+    weight: 0.3
+    transit_days: 14
+
+  - source: region_brazil_cerrado_corn
+    target: silo_brazil_interior
+    flow_type: inland_transport
+    product_form: grain
+    weight: 1.0
+    transit_days: 4
+
+  - source: silo_brazil_interior
+    target: port_santos_corn
+    flow_type: rail_road
+    product_form: grain
+    weight: 0.5
+    transit_days: 5
+    transit_days_min: 3
+    transit_days_max: 12
+
+  - source: silo_brazil_interior
+    target: port_parana_corn
+    flow_type: rail_road
+    product_form: grain
+    weight: 0.5
+    transit_days: 5
+
+  - source: port_santos_corn
+    target: chokepoint_cape_hope
+    flow_type: shipping
+    product_form: grain
+    weight: 0.5
+    transit_days: 18
+
+  - source: port_santos_corn
+    target: chokepoint_panama
+    flow_type: shipping
+    product_form: grain
+    weight: 0.3
+    transit_days: 20
+
+  - source: port_parana_corn
+    target: chokepoint_cape_hope
+    flow_type: shipping
+    product_form: grain
+    weight: 0.4
+    transit_days: 18
+
+  - source: chokepoint_cape_hope
+    target: chokepoint_malacca
+    flow_type: shipping
+    product_form: grain
+    weight: 0.5
+    transit_days: 16
+    transit_days_min: 12
+    transit_days_max: 24
+
+  - source: chokepoint_malacca
+    target: port_south_china_corn
+    flow_type: shipping
+    product_form: grain
+    weight: 0.6
+    transit_days: 7
+
+  - source: chokepoint_panama
+    target: maritime_route_pacific
+    flow_type: shipping
+    product_form: grain
+    weight: 0.4
+    transit_days: 5
+
+  - source: maritime_route_pacific
+    target: port_dalian_corn
+    flow_type: shipping
+    product_form: grain
+    weight: 0.4
+    transit_days: 18
+
+  - source: region_ukraine_corn
+    target: port_odessa_corn
+    flow_type: rail_road
+    product_form: grain
+    weight: 1.0
+    transit_days: 3
+
+  - source: port_odessa_corn
+    target: chokepoint_bosphorus
+    flow_type: shipping
+    product_form: grain
+    weight: 1.0
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 14
+
+  - source: chokepoint_bosphorus
+    target: chokepoint_gibraltar
+    flow_type: shipping
+    product_form: grain
+    weight: 0.5
+    transit_days: 8
+
+  - source: chokepoint_gibraltar
+    target: feed_mill_eu
+    flow_type: shipping
+    product_form: grain
+    weight: 0.6
+    transit_days: 4
+
+  - source: region_argentina_corn
+    target: port_rosario_corn
+    flow_type: inland_transport
+    product_form: grain
+    weight: 1.0
+    transit_days: 2
+
+  - source: port_rosario_corn
+    target: chokepoint_cape_hope
+    flow_type: shipping
+    product_form: grain
+    weight: 0.5
+    transit_days: 18
+
+  - source: port_rosario_corn
+    target: chokepoint_panama
+    flow_type: shipping
+    product_form: grain
+    weight: 0.3
+    transit_days: 20
+
+  - source: region_china_corn
+    target: feed_mill_china
+    flow_type: inland_transport
+    product_form: grain
+    weight: 0.8
+    transit_days: 3
+
+  - source: port_south_china_corn
+    target: feed_mill_china
+    flow_type: inland_transport
+    product_form: grain
+    weight: 1.0
+    transit_days: 2
+
+  - source: port_dalian_corn
+    target: feed_mill_china
+    flow_type: inland_transport
+    product_form: grain
+    weight: 1.0
+    transit_days: 2
+
+  - source: feed_mill_china
+    target: consumer_corn_feed_asia
+    flow_type: inland_transport
+    product_form: feed
+    weight: 1.0
+    transit_days: 2
+
+  - source: feed_mill_eu
+    target: consumer_corn_feed_asia
+    flow_type: commercial
+    product_form: feed
+    weight: 0.2
+    transit_days: 5
+
+  - source: feed_mill_mexico
+    target: consumer_corn_feed_americas
+    flow_type: inland_transport
+    product_form: feed
+    weight: 1.0
+    transit_days: 2
+
+  - source: silo_us_midwest
+    target: exchange_cbot_corn
+    flow_type: commercial
+    product_form: grain
+    weight: 0.5
+    transit_days: 0

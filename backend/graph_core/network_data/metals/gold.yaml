@@ -1,0 +1,422 @@
+commodity: gold
+sector: metals
+description: "Physical gold network — mines → refiners → LBMA/COMEX vaults → jewelry / investment"
+
+nodes:
+  - id: mine_nevada_carlin
+    commodity: gold
+    type: mine
+    product_form: doré
+    country: USA
+    region: Nevada
+    operator: Nevada Gold Mines (Barrick/Newmont)
+    capacity_kt: 0.12
+    lat: 40.90
+    lon: -116.30
+
+  - id: mine_grasberg_au
+    commodity: gold
+    type: mine
+    product_form: concentrate
+    country: Indonesia
+    region: Papua
+    operator: Freeport
+    capacity_kt: 0.05
+    description: "Gold by-product of Grasberg copper"
+
+  - id: mine_yanacocha
+    commodity: gold
+    type: mine
+    product_form: doré
+    country: Peru
+    region: Cajamarca
+    operator: Newmont
+    capacity_kt: 0.03
+    lat: -6.98
+    lon: -78.50
+
+  - id: mine_south_africa_witwatersrand
+    commodity: gold
+    type: mine
+    product_form: doré
+    country: South Africa
+    region: Gauteng
+    capacity_kt: 0.08
+    lat: -26.20
+    lon: 28.04
+
+  - id: mine_australia_superpit
+    commodity: gold
+    type: mine
+    product_form: doré
+    country: Australia
+    region: WA
+    operator: Northern Star / others
+    capacity_kt: 0.04
+    lat: -30.78
+    lon: 121.50
+
+  - id: mine_china_au
+    commodity: gold
+    type: mine
+    product_form: doré
+    country: China
+    region: Multi
+    capacity_kt: 0.15
+    description: "Aggregated China mine gold"
+
+  - id: mine_ghana_obusi
+    commodity: gold
+    type: mine
+    product_form: doré
+    country: Ghana
+    region: Ashanti
+    operator: AngloGold / others
+    capacity_kt: 0.03
+    lat: 6.20
+    lon: -1.68
+
+  - id: refinery_perth_mint_au
+    commodity: gold
+    type: refinery
+    accepts_forms: [doré, scrap]
+    product_form: bullion
+    country: Australia
+    region: WA
+    capacity_kt: 0.3
+
+  - id: refinery_rand_refinery
+    commodity: gold
+    type: refinery
+    accepts_forms: [doré, scrap]
+    product_form: bullion
+    country: South Africa
+    region: Gauteng
+    capacity_kt: 0.4
+
+  - id: refinery_pamp_suisse
+    commodity: gold
+    type: refinery
+    accepts_forms: [doré, scrap, bullion]
+    product_form: bullion
+    country: Switzerland
+    region: Ticino
+    capacity_kt: 0.5
+
+  - id: refinery_china_au
+    commodity: gold
+    type: refinery
+    accepts_forms: [doré, concentrate, scrap]
+    product_form: bullion
+    country: China
+    region: Multi
+    capacity_kt: 0.6
+
+  - id: refinery_us_west
+    commodity: gold
+    type: refinery
+    accepts_forms: [doré]
+    product_form: bullion
+    country: USA
+    region: West
+    capacity_kt: 0.2
+
+  - id: port_durban_au
+    commodity: gold
+    type: port
+    country: South Africa
+    region: KwaZulu-Natal
+    lat: -29.87
+    lon: 31.02
+
+  - id: port_jakarta_au
+    commodity: gold
+    type: port
+    country: Indonesia
+    region: Java
+    lat: -6.10
+    lon: 106.88
+
+  - id: vault_lbma_au
+    commodity: gold
+    type: warehouse
+    product_form: bullion
+    country: UK
+    region: London
+    stock_level_kt: 8.5
+    stock_level_kt_min: 7.0
+    stock_level_kt_max: 10.0
+    description: "LBMA gold vaults (approx kt)"
+
+  - id: vault_comex_au
+    commodity: gold
+    type: warehouse
+    product_form: bullion
+    country: USA
+    region: Multi
+    stock_level_kt: 0.9
+    stock_level_kt_min: 0.5
+    stock_level_kt_max: 1.5
+
+  - id: vault_shanghai_au
+    commodity: gold
+    type: warehouse
+    product_form: bullion
+    country: China
+    region: Shanghai
+    stock_level_kt: 2.0
+    stock_level_kt_min: 1.0
+    stock_level_kt_max: 4.0
+
+  - id: exchange_lbma_au
+    commodity: gold
+    type: exchange
+    product_form: bullion
+    country: UK
+    region: London
+
+  - id: exchange_comex_au
+    commodity: gold
+    type: exchange
+    product_form: bullion
+    country: USA
+    region: New York
+
+  - id: exchange_sge
+    commodity: gold
+    type: exchange
+    product_form: bullion
+    country: China
+    region: Shanghai
+    description: "Shanghai Gold Exchange"
+
+  - id: consumer_au_jewelry_india
+    commodity: gold
+    type: consumer
+    product_form: bullion
+    country: India
+    region: National
+
+  - id: consumer_au_jewelry_china
+    commodity: gold
+    type: consumer
+    product_form: bullion
+    country: China
+    region: National
+
+  - id: consumer_au_investment
+    commodity: gold
+    type: consumer
+    product_form: bullion
+    country: Multi
+    region: Global
+    description: "Bars / coins / ETF physical backing demand"
+
+  - id: scrap_hub_au
+    commodity: gold
+    type: scrap_hub
+    product_form: scrap
+    country: Multi
+    region: Global
+    capacity_kt: 1.2
+
+edges:
+  - source: mine_nevada_carlin
+    target: refinery_us_west
+    flow_type: inland_transport
+    product_form: doré
+    weight: 1.0
+    transit_days: 2
+
+  - source: refinery_us_west
+    target: vault_comex_au
+    flow_type: inland_transport
+    product_form: bullion
+    weight: 0.7
+    transit_days: 3
+
+  - source: mine_yanacocha
+    target: chokepoint_panama
+    flow_type: shipping
+    product_form: doré
+    weight: 0.8
+    transit_days: 10
+
+  - source: chokepoint_panama
+    target: refinery_pamp_suisse
+    flow_type: shipping
+    product_form: doré
+    weight: 0.5
+    transit_days: 12
+
+  - source: mine_grasberg_au
+    target: port_jakarta_au
+    flow_type: inland_transport
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 5
+
+  - source: port_jakarta_au
+    target: chokepoint_malacca
+    flow_type: shipping
+    product_form: concentrate
+    weight: 1.0
+    transit_days: 4
+
+  - source: chokepoint_malacca
+    target: refinery_china_au
+    flow_type: shipping
+    product_form: concentrate
+    weight: 0.6
+    transit_days: 12
+
+  - source: mine_south_africa_witwatersrand
+    target: refinery_rand_refinery
+    flow_type: inland_transport
+    product_form: doré
+    weight: 1.0
+    transit_days: 1
+
+  - source: refinery_rand_refinery
+    target: port_durban_au
+    flow_type: inland_transport
+    product_form: bullion
+    weight: 0.8
+    transit_days: 2
+
+  - source: port_durban_au
+    target: chokepoint_cape_hope
+    flow_type: shipping
+    product_form: bullion
+    weight: 0.7
+    transit_days: 3
+
+  - source: chokepoint_cape_hope
+    target: chokepoint_gibraltar
+    flow_type: shipping
+    product_form: bullion
+    weight: 0.6
+    transit_days: 18
+    transit_days_min: 14
+    transit_days_max: 25
+
+  - source: chokepoint_gibraltar
+    target: refinery_pamp_suisse
+    flow_type: shipping
+    product_form: bullion
+    weight: 0.5
+    transit_days: 5
+
+  - source: mine_australia_superpit
+    target: refinery_perth_mint_au
+    flow_type: inland_transport
+    product_form: doré
+    weight: 1.0
+    transit_days: 1
+
+  - source: refinery_perth_mint_au
+    target: vault_lbma_au
+    flow_type: shipping
+    product_form: bullion
+    weight: 0.6
+    transit_days: 25
+    transit_days_min: 20
+    transit_days_max: 35
+
+  - source: mine_china_au
+    target: refinery_china_au
+    flow_type: inland_transport
+    product_form: doré
+    weight: 1.0
+    transit_days: 2
+
+  - source: mine_ghana_obusi
+    target: chokepoint_gibraltar
+    flow_type: shipping
+    product_form: doré
+    weight: 0.7
+    transit_days: 12
+
+  - source: refinery_pamp_suisse
+    target: vault_lbma_au
+    flow_type: inland_transport
+    product_form: bullion
+    weight: 1.0
+    transit_days: 2
+
+  - source: refinery_china_au
+    target: vault_shanghai_au
+    flow_type: inland_transport
+    product_form: bullion
+    weight: 0.8
+    transit_days: 1
+
+  - source: refinery_china_au
+    target: consumer_au_jewelry_china
+    flow_type: inland_transport
+    product_form: bullion
+    weight: 0.7
+    transit_days: 2
+
+  - source: vault_lbma_au
+    target: exchange_lbma_au
+    flow_type: delivery
+    product_form: bullion
+    weight: 1.0
+    transit_days: 0
+
+  - source: vault_comex_au
+    target: exchange_comex_au
+    flow_type: delivery
+    product_form: bullion
+    weight: 1.0
+    transit_days: 0
+
+  - source: vault_shanghai_au
+    target: exchange_sge
+    flow_type: delivery
+    product_form: bullion
+    weight: 1.0
+    transit_days: 0
+
+  - source: exchange_lbma_au
+    target: consumer_au_investment
+    flow_type: commercial
+    product_form: bullion
+    weight: 0.5
+    transit_days: 1
+
+  - source: exchange_lbma_au
+    target: consumer_au_jewelry_india
+    flow_type: commercial
+    product_form: bullion
+    weight: 0.4
+    transit_days: 5
+
+  - source: exchange_comex_au
+    target: consumer_au_investment
+    flow_type: commercial
+    product_form: bullion
+    weight: 0.4
+    transit_days: 1
+
+  - source: exchange_sge
+    target: consumer_au_jewelry_china
+    flow_type: commercial
+    product_form: bullion
+    weight: 0.6
+    transit_days: 1
+
+  - source: scrap_hub_au
+    target: refinery_pamp_suisse
+    flow_type: inland_transport
+    product_form: scrap
+    weight: 0.4
+    transit_days: 5
+
+  - source: scrap_hub_au
+    target: refinery_china_au
+    flow_type: shipping
+    product_form: scrap
+    weight: 0.3
+    transit_days: 15
