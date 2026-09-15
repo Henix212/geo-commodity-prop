@@ -24,19 +24,20 @@ Fichiers : `backend/graph_core/` + `network_data/`
 
 ### Topologie YAML (statique)
 - [x] Copper : mines, ports, smelters, refiners, scrap, consumers, exchanges
-- [x] Shared bottlenecks (Pacifique, Panama, Malacca, Bab el-Mandeb, Suez, Cap) + capacités
-- [x] `accepts_forms` / `product_form`, transit min/mean/max, stocks warehouse
-- [ ] Aluminum — même schéma que copper (bauxite → alumina → smelter)
-- [ ] Energy — oil + LNG (puits, pipelines, détroits, terminaux)
-- [ ] Agriculture — wheat + corn (régions, silos, ports Black Sea / US Gulf)
+- [x] Aluminum — bauxite → alumina → smelter
+- [x] Silver / Gold — mines → refiners → vaults LBMA/COMEX/SGE
+- [x] Oil — fields → terminals → Hormuz/Malacca/Suez → refineries
+- [x] LNG — liquefaction → chokepoints → regas → hubs (TTF/JKM/HH)
+- [x] Wheat / Corn — régions → silos/ports → Bosphore / Gulf → mills
+- [x] Shared bottlenecks (+ Ormuz, Bosphore, Gibraltar)
 
 ### Builder → tenseurs GNN
-- [x] `builder.py` — merge shared + sector YAML
-- [ ] Export NetworkX (`nx.DiGraph`) depuis le merge
-- [ ] Conversion PyG (`torch_geometric.data.Data` / `HeteroData`)
-- [ ] Features nœud : type one-hot, capacity, stock, lat/lon, event severity
-- [ ] Features arête : flow_type, weight, product_form, transit_days
-- [ ] Validation : tous les endpoints d’edges existent ; cohérence `accepts_forms`
+- [x] `builder.py` — merge shared + sector YAML (+ `load_commodity`)
+- [x] Export NetworkX (`nx.DiGraph`) depuis le merge
+- [x] Conversion PyG (`torch_geometric.data.Data`)
+- [x] Features nœud : type one-hot, capacity, stock, lat/lon, event severity
+- [x] Features arête : flow_type, weight, product_form, transit_days
+- [x] Validation : endpoints + cohérence `accepts_forms`
 
 ### Données quant (hors YAML — DB / market)
 - [ ] Production réelle par mine (vs `capacity_kt`) → `database/`
@@ -97,8 +98,7 @@ Fichiers : `backend/database/`
 
 ## Ordre de travail suggéré (prochaines actions)
 
-1. NetworkX export depuis `builder.load_sector("metals")`
-2. Features PyG + sanity check centralité sur copper
-3. `market_data.py` — série cuivre (proxy HG=F / ticker choisi)
-4. Scraper RSS + parser LLM → 1 event injecté sur `mine_escondida`
-5. GAT minimal → score tension → VectorBT smoke backtest
+1. Scraper RSS + parser LLM → event injecté sur un nœud (Phase 2)
+2. Baseline diffusion NetworkX / centralité sur copper & oil
+3. `market_data.py` — séries HG=F, CL=F, GC=F, SI=F
+4. GAT minimal → score tension → VectorBT smoke backtest

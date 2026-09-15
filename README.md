@@ -34,10 +34,10 @@ backend/
 
 ```text
 backend/graph_core/network_data/
-  shared/          # bottlenecks (merged by builder)
-  metals/          # copper, aluminum, ...
-  energy/          # oil, lng, ...
-  agriculture/     # wheat, corn, ...
+  shared/          # bottlenecks (Hormuz, Suez, Malacca, Bosphore, …)
+  metals/          # copper, aluminum, silver, gold
+  energy/          # oil, lng
+  agriculture/     # wheat, corn
 ```
 
 YAML = topologie statique. Prix, prod réelle, TC/RC, policies → `database/` + `quant/` (pas les YAML).
