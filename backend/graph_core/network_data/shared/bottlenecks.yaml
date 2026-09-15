@@ -32,6 +32,16 @@ nodes:
     capacity_ships_per_day: 60
     capacity_notes: "Security-sensitive; disruptions divert traffic to Cape"
 
+  - id: chokepoint_hormuz
+    commodity: cross_commodity
+    type: bottleneck
+    description: "Detroit d'Ormuz (Golfe Persique)"
+    country: Iran/Oman/UAE
+    capacity_ships_per_day: 50
+    capacity_notes: "Critical for oil/LNG (~20% of global oil seaborne trade); less central for copper but shared maritime risk"
+    lat: 26.57
+    lon: 56.25
+
   - id: chokepoint_suez
     commodity: cross_metal
     type: bottleneck
