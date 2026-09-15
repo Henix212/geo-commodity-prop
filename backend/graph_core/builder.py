@@ -2,7 +2,7 @@ from pathlib import Path
 
 import yaml
 
-NETWORK_DATA_DIR = Path(__file__).parent / "network_data"
+from backend.config import NETWORK_DATA_DIR
 
 
 def _load_yaml(path: Path) -> dict:
