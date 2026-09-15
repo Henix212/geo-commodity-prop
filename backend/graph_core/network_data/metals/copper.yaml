@@ -1,0 +1,49 @@
+commodity: copper
+sector: metals
+
+nodes:
+  - id: mine_escondida
+    commodity: copper
+    type: mine
+    country: Chile
+    region: Atacama
+    capacity_kt: 1200
+
+  - id: port_antofagasta
+    commodity: copper
+    type: port
+    country: Chile
+    region: Antofagasta
+
+  - id: port_qingdao
+    commodity: copper
+    type: port
+    country: China
+    region: Shandong
+
+  - id: smelter_shanghai
+    commodity: copper
+    type: smelter
+    country: China
+    region: Shanghai
+
+edges:
+  - source: mine_escondida
+    target: port_antofagasta
+    flow_type: rail_road
+    weight: 1.0
+
+  - source: port_antofagasta
+    target: maritime_route_pacific
+    flow_type: shipping
+    weight: 1.0
+
+  - source: maritime_route_pacific
+    target: port_qingdao
+    flow_type: shipping
+    weight: 1.0
+
+  - source: port_qingdao
+    target: smelter_shanghai
+    flow_type: inland_transport
+    weight: 1.0

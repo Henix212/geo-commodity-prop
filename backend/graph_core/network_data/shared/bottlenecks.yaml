@@ -1,0 +1,5 @@
+nodes:
+  - id: maritime_route_pacific
+    commodity: cross_metal
+    type: bottleneck
+    description: "Route maritime Pacifique Sud"

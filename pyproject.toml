@@ -13,4 +13,5 @@ dependencies = [
     "beautifulsoup4",
     "yfinance",
     "vectorbt",
+    "pyyaml",
 ]
