@@ -1,1 +1,1 @@
-# geo-commodity-prop
+# Geo Commodity Prop
