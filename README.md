@@ -46,6 +46,7 @@ YAML = static topology. Prices, actual production, TC/RC, and policies belong in
 
 ```bash
 uv sync
-uv run python -m backend.main --sector metals
-# or: PYTHONPATH=. python3 -m backend.main --sector metals
+uv run python -m backend.main --sector metals --skip-ingest
+uv run python -m backend.ingestion.scrapers
+# writes data/raw_articles.jsonl (RSS + GDELT)
 ```

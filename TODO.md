@@ -51,7 +51,7 @@ Files: `backend/graph_core/` + `network_data/`
 
 Files: `backend/ingestion/`
 
-- [ ] `scrapers.py` — RSS / news / reports (USGS, maritime, energy ministries)
+- [x] `scrapers.py` — RSS (Mining.com, OilPrice, EIA, Google News) + GDELT + NASA EONET
 - [ ] `parser_llm.py` — LLM → triplet `[entity, event_type, severity 0–1]`
 - [ ] Text entity → graph `node_id` mapping (alias / fuzzy / gazetteer)
 - [ ] Event types: strike, accident, sanction, weather, congestion, force majeure
