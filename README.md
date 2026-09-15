@@ -1,24 +1,43 @@
 # Geo Commodity Prop
 
-Physical commodity flow graphs for prop-trading research (metals, energy, agriculture).
+GNN de propagation de chocs sur les chaînes physiques commodities  
+(mines → ports → chokepoints → smelters → raffineries → tension / alpha).
 
-## Data sources
+Roadmap détaillée : voir [`TODO.md`](TODO.md).
 
-Network topology and capacity hints are compiled from public sources (approximate; not live feeds):
+## Architecture
 
-- [USGS Copper Statistics and Information](https://www.usgs.gov/centers/national-minerals-information-center/copper-statistics-and-information) — production by country
-- [ICSG](https://icsg.org) — concentrate / blister / refined copper flows
-- [UN Comtrade](https://comtradeplus.un.org) — trade flows (HS 2603, 7403)
-- [Cochilco](https://www.cochilco.cl) — Chile copper exports and market data
-- Company reports — BHP (Escondida), Freeport, Codelco, Glencore, Ivanhoe, Aurubis, Jiangxi Copper
-- Port / shipping context — MarineTraffic and port authority statistics
+1. **Graphe physique** — nœuds (mines, ports, bottlenecks, …) + arêtes (flux) en YAML → NetworkX / PyG  
+2. **Événements NLP** — scrape news → LLM → `[entité, type, sévérité]` injecté sur le graphe  
+3. **GNN (GAT)** — propagation de l’onde de choc → score de tension par commodity  
+4. **Quant** — signal → backtest VectorBT
+
+```text
+backend/
+  graph_core/     # builder + network_data YAML
+  ingestion/      # scrapers + parser LLM
+  database/       # prod, stocks, TC/RC, policies, events
+  quant/          # market_data + strategy + backtest
+  models/         # checkpoints GNN
+```
+
+## Data sources (topologie)
+
+- [USGS Copper](https://www.usgs.gov/centers/national-minerals-information-center/copper-statistics-and-information)
+- [ICSG](https://icsg.org)
+- [UN Comtrade](https://comtradeplus.un.org)
+- [Cochilco](https://www.cochilco.cl)
+- Company reports (BHP, Freeport, Codelco, Glencore, …)
+- Port / shipping stats (MarineTraffic, port authorities)
 
 ## Network data layout
 
 ```text
 backend/graph_core/network_data/
-  shared/          # cross-commodity bottlenecks (canals, straits, routes)
+  shared/          # bottlenecks (merged by builder)
   metals/          # copper, aluminum, ...
   energy/          # oil, lng, ...
   agriculture/     # wheat, corn, ...
 ```
+
+YAML = topologie statique. Prix, prod réelle, TC/RC, policies → `database/` + `quant/` (pas les YAML).
