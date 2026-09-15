@@ -12,9 +12,9 @@ Stack cible : PyTorch Geometric · NetworkX · transformers / LLM local · Vecto
 - [x] `pyproject.toml` + `uv` (torch, torch-geometric, networkx, pandas, numpy, transformers, requests, beautifulsoup4, yfinance, vectorbt, pyyaml)
 - [x] Layout `backend/` (`graph_core`, `ingestion`, `database`, `quant`, `models`)
 - [x] Structure YAML `network_data/{shared,metals,energy,agriculture}/`
-- [ ] `config.py` — chemins, tickers, seuils, env
-- [ ] `main.py` — point d’entrée (build graph → events → inference → signal)
-- [ ] Packages Python (`__init__.py`) + imports propres
+- [x] `config.py` — chemins, tickers, seuils, env
+- [x] `main.py` — point d’entrée (build graph → events → inference → signal)
+- [x] Packages Python (`__init__.py`) + imports propres
 
 ---
 

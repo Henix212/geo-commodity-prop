@@ -41,3 +41,11 @@ backend/graph_core/network_data/
 ```
 
 YAML = topologie statique. Prix, prod réelle, TC/RC, policies → `database/` + `quant/` (pas les YAML).
+
+## Run (Phase 0)
+
+```bash
+uv sync
+uv run python -m backend.main --sector metals
+# ou: PYTHONPATH=. python3 -m backend.main --sector metals
+```
