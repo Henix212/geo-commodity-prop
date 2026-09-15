@@ -57,3 +57,22 @@ nodes:
     country: South Africa
     capacity_ships_per_day: null
     notes: "Fallback route; adds ~10-14 days vs Suez on Asia-Europe"
+
+  - id: chokepoint_bosphorus
+    commodity: cross_commodity
+    type: bottleneck
+    description: "Detroit du Bosphore / Turquie (export grains Mer Noire)"
+    country: Turkey
+    capacity_ships_per_day: 40
+    capacity_notes: "Critical for Black Sea wheat/corn exports"
+    lat: 41.12
+    lon: 29.07
+
+  - id: chokepoint_gibraltar
+    commodity: cross_commodity
+    type: bottleneck
+    description: "Detroit de Gibraltar (Mediterranee / Atlantique)"
+    country: Spain/UK/Morocco
+    capacity_ships_per_day: null
+    lat: 35.95
+    lon: -5.60
