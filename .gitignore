@@ -219,3 +219,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# LLM model weights (keep backend/models/.gitkeep and __init__.py)
+backend/models/Qwen*/
+backend/models/**/Qwen*/
