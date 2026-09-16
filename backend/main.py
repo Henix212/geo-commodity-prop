@@ -54,8 +54,8 @@ def ingest_events(_network: dict) -> list[dict]:
         gdelt_timespan=config.GDELT_TIMESPAN,
         gdelt_maxrecords=config.GDELT_MAXRECORDS,
     )
-    path = save_articles(articles)
-    logger.info("Ingested %d articles → %s", len(articles), path)
+    path = save_articles(articles, persist_db=True)
+    logger.info("Ingested %d articles (batch) → %s, db=%s", len(articles), path, config.DB_PATH)
     return [
         {
             "uid": a.uid,

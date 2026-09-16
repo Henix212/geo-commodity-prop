@@ -18,11 +18,14 @@ Target stack: PyTorch Geometric · NetworkX · transformers / local LLM · Vecto
 
 ---
 
+
+
 ## Phase 1 — Graph modeling (physical network)
 
 Files: `backend/graph_core/` + `network_data/`
 
 ### Static YAML topology
+
 - [x] Copper: mines, ports, smelters, refiners, scrap, consumers, exchanges
 - [x] Aluminum — bauxite → alumina → smelter
 - [x] Silver / Gold — mines → refiners → LBMA/COMEX/SGE vaults
@@ -31,7 +34,10 @@ Files: `backend/graph_core/` + `network_data/`
 - [x] Wheat / Corn — regions → silos/ports → Bosphorus / Gulf → mills
 - [x] Shared bottlenecks (+ Hormuz, Bosphorus, Gibraltar)
 
+
+
 ### Builder → GNN tensors
+
 - [x] `builder.py` — merge shared + sector YAML (+ `load_commodity`)
 - [x] NetworkX export (`MultiDiGraph`) from merged network
 - [x] PyG conversion (`torch_geometric.data.Data`)
@@ -39,13 +45,18 @@ Files: `backend/graph_core/` + `network_data/`
 - [x] Edge features: flow_type, weight, product_form, transit_days
 - [x] Validation: edge endpoints + `accepts_forms` consistency
 
+
+
 ### Quant data (outside YAML — DB / market)
+
 - [ ] Actual mine production (vs nameplate `capacity_kt`) → `database/`
 - [ ] TC/RC by route → `database/`
 - [ ] LME / SHFE / COMEX price time series → `quant/market_data.py`
 - [ ] Trade-policy constraints (Indonesia ore rules, Chile taxes, …) → dated table / config
 
 ---
+
+
 
 ## Phase 2 — Event injection (NLP engine)
 
@@ -60,6 +71,8 @@ Files: `backend/ingestion/`
 
 ---
 
+
+
 ## Phase 3 — GNN propagation (model core)
 
 Files: `backend/models/` + training
@@ -73,6 +86,8 @@ Files: `backend/models/` + training
 
 ---
 
+
+
 ## Phase 4 — Quant / alpha / backtest
 
 Files: `backend/quant/`
@@ -85,16 +100,21 @@ Files: `backend/quant/`
 
 ---
 
+
+
 ## Phase 5 — Database & ops
 
 Files: `backend/database/`
 
+- [x] `db.py` — SQLite connection + schema init
+- [x] `models.py` — article upsert/list (scraper history preserved by uid)
 - [ ] `models.py` — node snapshots, edges, events, prices, production, policies
-- [ ] `db.py` — connection, migrations, CRUD
-- [ ] Periodic jobs: scrape news, refresh prices, refresh production
+- [ ] Periodic jobs: refresh prices, refresh production
 - [ ] Basic logging / monitoring
 
 ---
+
+
 
 ## Suggested next steps
 
@@ -102,3 +122,4 @@ Files: `backend/database/`
 2. NetworkX diffusion / centrality baseline on copper & oil
 3. `market_data.py` — HG=F, CL=F, GC=F, SI=F series
 4. Minimal GAT → tension score → VectorBT smoke backtest
+

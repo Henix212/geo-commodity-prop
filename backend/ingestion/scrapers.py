@@ -346,8 +346,27 @@ def scrape_all(
     return dedupe_articles(collected)
 
 
-def save_articles(articles: list[Article], path: Path | None = None) -> Path:
+def save_articles(
+    articles: list[Article],
+    path: Path | None = None,
+    *,
+    persist_db: bool = True,
+) -> Path:
+    """Persist articles to SQLite (upsert) and write latest batch to JSONL."""
+    from backend.database.models import upsert_articles
+
     config.ensure_dirs()
+
+    if persist_db:
+        result = upsert_articles(articles)
+        logger.info(
+            "DB upsert: +%d new, ~%d updated, %d total in %s",
+            result.inserted,
+            result.updated,
+            result.total,
+            config.DB_PATH,
+        )
+
     out = path or (config.DATA_DIR / "raw_articles.jsonl")
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", encoding="utf-8") as f:
@@ -355,7 +374,7 @@ def save_articles(articles: list[Article], path: Path | None = None) -> Path:
             row = asdict(art)
             row["uid"] = art.uid
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
-    logger.info("Wrote %d articles → %s", len(articles), out)
+    logger.info("Wrote %d articles (latest batch) → %s", len(articles), out)
     return out
 
 

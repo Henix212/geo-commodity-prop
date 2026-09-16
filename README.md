@@ -3,13 +3,13 @@
 GNN for shock propagation along physical commodity supply chains  
 (mines → ports → chokepoints → smelters → refiners → tension / alpha).
 
-Detailed roadmap: see [`TODO.md`](TODO.md).
+Detailed roadmap: see `[TODO.md](TODO.md)`.
 
 ## Architecture
 
-1. **Physical graph** — nodes (mines, ports, bottlenecks, …) + edges (flows) in YAML → NetworkX / PyG  
-2. **NLP events** — scrape news → LLM → `[entity, type, severity]` injected into the graph  
-3. **GNN (GAT)** — shock-wave propagation → tension score per commodity  
+1. **Physical graph** — nodes (mines, ports, bottlenecks, …) + edges (flows) in YAML → NetworkX / PyG
+2. **NLP events** — scrape news → LLM → `[entity, type, severity]` injected into the graph
+3. **GNN (GAT)** — shock-wave propagation → tension score per commodity
 4. **Quant** — signal → VectorBT backtest
 
 ```text
@@ -21,6 +21,8 @@ backend/
   models/         # GNN checkpoints
 ```
 
+
+
 ## Data sources (topology)
 
 - [USGS Copper](https://www.usgs.gov/centers/national-minerals-information-center/copper-statistics-and-information)
@@ -29,6 +31,8 @@ backend/
 - [Cochilco](https://www.cochilco.cl)
 - Company reports (BHP, Freeport, Codelco, Glencore, …)
 - Port / shipping stats (MarineTraffic, port authorities)
+
+
 
 ## Network data layout
 
@@ -48,5 +52,6 @@ YAML = static topology. Prices, actual production, TC/RC, and policies belong in
 uv sync
 uv run python -m backend.main --sector metals --skip-ingest
 uv run python -m backend.ingestion.scrapers
-# writes data/raw_articles.jsonl (RSS + GDELT)
+# upserts into data/geo_commodity.db + writes data/raw_articles.jsonl (latest batch)
 ```
+
