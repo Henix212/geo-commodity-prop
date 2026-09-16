@@ -8,7 +8,7 @@ Detailed roadmap: see `[TODO.md](TODO.md)`.
 ## Architecture
 
 1. **Physical graph** — nodes (mines, ports, bottlenecks, …) + edges (flows) in YAML → NetworkX / PyG
-2. **NLP events** — scrape news → LLM → `[entity, type, severity]` injected into the graph
+2. **NLP events** — scrape news → LLM → structured shock JSON → map to `node_id` → inject
 3. **GNN (GAT)** — shock-wave propagation → tension score per commodity
 4. **Quant** — signal → VectorBT backtest
 
@@ -53,5 +53,13 @@ uv sync
 uv run python -m backend.main --sector metals --skip-ingest
 uv run python -m backend.ingestion.scrapers
 # upserts into data/geo_commodity.db + writes data/raw_articles.jsonl (latest batch)
+
+# LLM parse (uses backend/models/Qwen2.5-7B-Instruct by default)
+# Prefer --from-db so you don't re-scrape while loading the 7B model.
+uv run python -m backend.ingestion.parser_llm --limit 1 --sector metals
+# or:
+uv run python -m backend.main --sector metals --from-db --parse-limit 1
+# On GPU:
+# GCP_DEVICE=cuda uv run python -m backend.main --sector metals --from-db --parse-limit 5
 ```
 

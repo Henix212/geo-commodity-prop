@@ -63,11 +63,12 @@ Files: `backend/graph_core/` + `network_data/`
 Files: `backend/ingestion/`
 
 - [x] `scrapers.py` — RSS (Mining.com, OilPrice, EIA, Google News) + GDELT + NASA EONET
-- [ ] `parser_llm.py` — LLM → triplet `[entity, event_type, severity 0–1]`
-- [ ] Text entity → graph `node_id` mapping (alias / fuzzy / gazetteer)
-- [ ] Event types: strike, accident, sanction, weather, congestion, force majeure
-- [ ] Dynamic injection: temporary node feature (time decay)
-- [ ] Persist events in DB (`database/models.py`)
+- [x] `parser_llm.py` — LLM → structured shock JSON (+ commodity/direction/confidence)
+- [x] Text entity → graph `node_id` mapping (gazetteer / fuzzy)
+- [x] Event types: strike, accident, sanction, weather, congestion, force majeure, …
+- [x] Dynamic injection: temporary node `event_severity` feature
+- [x] Persist events in DB (`database/models.py`)
+- [ ] Event severity time decay (half-life from config)
 
 ---
 
@@ -108,7 +109,8 @@ Files: `backend/database/`
 
 - [x] `db.py` — SQLite connection + schema init
 - [x] `models.py` — article upsert/list (scraper history preserved by uid)
-- [ ] `models.py` — node snapshots, edges, events, prices, production, policies
+- [x] `models.py` — shock events upsert/list
+- [ ] `models.py` — node snapshots, edges, prices, production, policies
 - [ ] Periodic jobs: refresh prices, refresh production
 - [ ] Basic logging / monitoring
 
