@@ -42,6 +42,7 @@ TICKERS: dict[str, str] = {
 # Event / model thresholds
 # ---------------------------------------------------------------------------
 EVENT_SEVERITY_MIN = float(os.getenv("GCP_EVENT_SEVERITY_MIN", "0.3"))
+EVENT_CONFIDENCE_MIN = float(os.getenv("GCP_EVENT_CONFIDENCE_MIN", "0.4"))
 EVENT_DECAY_HALF_LIFE_HOURS = float(os.getenv("GCP_EVENT_DECAY_HALF_LIFE_HOURS", "72"))
 TENSION_LONG_THRESHOLD = float(os.getenv("GCP_TENSION_LONG", "0.65"))
 TENSION_SHORT_THRESHOLD = float(os.getenv("GCP_TENSION_SHORT", "0.35"))
@@ -73,7 +74,12 @@ GDELT_QUERY = os.getenv(
 )
 GDELT_TIMESPAN = os.getenv("GCP_GDELT_TIMESPAN", "24h")
 GDELT_MAXRECORDS = int(os.getenv("GCP_GDELT_MAXRECORDS", "75"))
-LLM_MODEL_NAME = os.getenv("GCP_LLM_MODEL", "local")
+LLM_MODEL_PATH = os.getenv(
+    "GCP_LLM_MODEL",
+    str(MODELS_DIR / "Qwen2.5-7B-Instruct"),
+)
+LLM_MAX_NEW_TOKENS = int(os.getenv("GCP_LLM_MAX_NEW_TOKENS", "256"))
+LLM_PARSE_LIMIT = int(os.getenv("GCP_LLM_PARSE_LIMIT", "20"))
 
 
 def ensure_dirs() -> None:
