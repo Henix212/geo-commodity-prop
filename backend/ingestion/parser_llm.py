@@ -344,22 +344,122 @@ def filter_events(
     return out
 
 
-def inject_events_into_network(network: dict, events: list[ShockEvent]) -> int:
-    """Write max severity onto matching nodes as event_severity feature."""
+def parse_event_timestamp(value: str | datetime | None) -> datetime | None:
+    """Parse ISO extracted_at (or datetime) to timezone-aware UTC."""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        dt = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def event_age_hours(
+    extracted_at: str | datetime | None,
+    *,
+    as_of: datetime | None = None,
+) -> float:
+    """Hours since event extraction; 0 if timestamp missing/unparseable."""
+    ts = parse_event_timestamp(extracted_at)
+    if ts is None:
+        return 0.0
+    now = as_of or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    return max(0.0, (now - ts).total_seconds() / 3600.0)
+
+
+def decay_factor(
+    age_hours: float,
+    half_life_hours: float | None = None,
+) -> float:
+    """Exponential half-life decay: factor = 0.5 ** (age / half_life)."""
+    hl = config.EVENT_DECAY_HALF_LIFE_HOURS if half_life_hours is None else half_life_hours
+    if hl <= 0:
+        return 1.0
+    return float(0.5 ** (max(0.0, age_hours) / hl))
+
+
+def effective_severity(
+    severity: float,
+    extracted_at: str | datetime | None,
+    *,
+    as_of: datetime | None = None,
+    half_life_hours: float | None = None,
+) -> tuple[float, float]:
+    """Return (decayed_severity, decay_factor) for an event."""
+    age = event_age_hours(extracted_at, as_of=as_of)
+    factor = decay_factor(age, half_life_hours)
+    return float(severity) * factor, factor
+
+
+def shock_event_from_row(row: dict[str, Any]) -> ShockEvent:
+    """Rebuild ShockEvent from a DB / dict row."""
+    return ShockEvent(
+        entity_text=str(row["entity_text"]),
+        event_type=str(row["event_type"]),
+        severity=float(row["severity"]),
+        commodity=str(row["commodity"]),
+        direction=str(row["direction"]),
+        confidence=float(row.get("confidence") or 0.0),
+        article_uid=str(row.get("article_uid") or ""),
+        node_id=row.get("node_id"),
+        match_score=float(row.get("match_score") or 0.0),
+        extracted_at=str(row.get("extracted_at") or datetime.now(timezone.utc).isoformat()),
+    )
+
+
+def inject_events_into_network(
+    network: dict,
+    events: list[ShockEvent] | list[dict[str, Any]],
+    *,
+    as_of: datetime | None = None,
+    half_life_hours: float | None = None,
+    min_severity: float | None = None,
+) -> int:
+    """Write max *decayed* severity onto matching nodes as event_severity.
+
+    Decay: severity_eff = severity * 0.5 ** (age_hours / half_life_hours)
+    with half-life from ``GCP_EVENT_DECAY_HALF_LIFE_HOURS`` (default 72h).
+    Events below ``min_severity`` after decay are skipped.
+    """
+    min_sev = config.EVENT_SEVERITY_MIN if min_severity is None else min_severity
     by_id = {n["id"]: n for n in network.get("nodes") or [] if n.get("id")}
     touched = 0
-    for ev in events:
+    now = as_of or datetime.now(timezone.utc)
+
+    for raw in events:
+        ev = raw if isinstance(raw, ShockEvent) else shock_event_from_row(raw)
         if not ev.node_id or ev.node_id not in by_id:
             continue
+
+        decayed, factor = effective_severity(
+            ev.severity,
+            ev.extracted_at,
+            as_of=now,
+            half_life_hours=half_life_hours,
+        )
+        if decayed < min_sev:
+            continue
+
+        signed = decayed if ev.direction != "supply_up" else -decayed
         node = by_id[ev.node_id]
-        signed = ev.severity if ev.direction != "supply_up" else -ev.severity
         prev = float(node.get("event_severity") or 0.0)
-        # keep strongest absolute shock
+        # keep strongest absolute (decayed) shock
         if abs(signed) >= abs(prev):
             node["event_severity"] = signed
+            node["event_severity_raw"] = ev.severity
+            node["event_decay_factor"] = factor
             node["event_type"] = ev.event_type
             node["event_direction"] = ev.direction
             node["event_commodity"] = ev.commodity
+            node["event_extracted_at"] = ev.extracted_at
             touched += 1
     return touched
 

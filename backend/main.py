@@ -12,7 +12,7 @@ from backend.graph_core import feature_dims, load_sector, to_networkx, to_pyg, v
 logger = logging.getLogger(__name__)
 
 
-def build_graph(sector: str) -> dict:
+def build_graph(sector: str, *, apply_reference: bool = True) -> dict:
     network = load_sector(sector, validate=True)
     logger.info(
         "Loaded %s: %d nodes, %d edges, commodities=%s",
@@ -24,6 +24,22 @@ def build_graph(sector: str) -> dict:
     issues = validate_network(network)
     if issues:
         logger.warning("Validation issues: %s", issues[:5])
+    if apply_reference:
+        from backend.database import (
+            apply_policies_to_network,
+            apply_production_to_network,
+            apply_tc_rc_to_network,
+        )
+
+        n_prod = apply_production_to_network(network)
+        n_tc = apply_tc_rc_to_network(network)
+        n_pol = apply_policies_to_network(network)
+        logger.info(
+            "Reference data applied: production_nodes=%d tc_rc_edges=%d policy_hits=%d",
+            n_prod,
+            n_tc,
+            n_pol,
+        )
     return network
 
 
@@ -148,6 +164,22 @@ def ingest_events_from_db(
     return [e.to_dict() for e in events]
 
 
+def inject_persisted_events(network: dict, *, limit: int = 1000) -> list[dict]:
+    """Load events from SQLite and inject with time decay (no LLM)."""
+    from backend.database import list_events
+    from backend.ingestion.parser_llm import inject_events_into_network
+
+    rows = list_events(limit=limit)
+    injected = inject_events_into_network(network, rows)
+    logger.info(
+        "Injected %d persisted events onto %d nodes (half-life=%sh)",
+        len(rows),
+        injected,
+        config.EVENT_DECAY_HALF_LIFE_HOURS,
+    )
+    return rows
+
+
 def run(
     sector: str | None = None,
     *,
@@ -163,7 +195,7 @@ def run(
     _nx_graph, _pyg_data = graph_tensors(network)
 
     if skip_ingest and not from_db:
-        events: list[dict] = []
+        events = inject_persisted_events(network)
     elif from_db:
         events = ingest_events_from_db(network, parse_limit=parse_limit)
     elif skip_llm:
@@ -174,7 +206,7 @@ def run(
             gdelt_maxrecords=config.GDELT_MAXRECORDS,
         )
         save_articles(articles, persist_db=True)
-        events = []
+        events = inject_persisted_events(network)
         logger.info("Scraped %d articles (LLM skipped)", len(articles))
     else:
         events = ingest_events(network, parse_limit=parse_limit)

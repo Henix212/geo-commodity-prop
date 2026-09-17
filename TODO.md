@@ -49,10 +49,11 @@ Files: `backend/graph_core/` + `network_data/`
 
 ### Quant data (outside YAML — DB / market)
 
-- [ ] Actual mine production (vs nameplate `capacity_kt`) → `database/`
-- [ ] TC/RC by route → `database/`
-- [ ] LME / SHFE / COMEX price time series → `quant/market_data.py`
-- [ ] Trade-policy constraints (Indonesia ore rules, Chile taxes, …) → dated table / config
+- [x] Actual mine production (vs nameplate `capacity_kt`) → `database/`
+- [x] TC/RC by route → `database/`
+- [x] LME / SHFE / COMEX price time series → `quant/market_data.py`
+- [x] Trade-policy constraints (Indonesia ore rules, Chile taxes, …) → dated table / config
+- [ ] Periodic jobs: refresh prices, refresh production
 
 ---
 
@@ -68,7 +69,7 @@ Files: `backend/ingestion/`
 - [x] Event types: strike, accident, sanction, weather, congestion, force majeure, …
 - [x] Dynamic injection: temporary node `event_severity` feature
 - [x] Persist events in DB (`database/models.py`)
-- [ ] Event severity time decay (half-life from config)
+- [x] Event severity time decay (half-life from config)
 
 ---
 
@@ -93,7 +94,7 @@ Files: `backend/models/` + training
 
 Files: `backend/quant/`
 
-- [ ] `market_data.py` — fetch & cache prices (yfinance / futures APIs)
+- [x] `market_data.py` — fetch & cache prices (yfinance / futures APIs)
 - [ ] `strategy.py` — GNN tension → long/short signal
 - [ ] VectorBT backtest (sharpe, drawdown, turnover)
 - [ ] Stress scenarios: Escondida outage, Panama blockade, Suez closure
@@ -110,7 +111,8 @@ Files: `backend/database/`
 - [x] `db.py` — SQLite connection + schema init
 - [x] `models.py` — article upsert/list (scraper history preserved by uid)
 - [x] `models.py` — shock events upsert/list
-- [ ] `models.py` — node snapshots, edges, prices, production, policies
+- [x] `models.py` — production, TC/RC, prices, policies (+ seed YAML)
+- [ ] `models.py` — node snapshots, edges (full graph mirror)
 - [ ] Periodic jobs: refresh prices, refresh production
 - [ ] Basic logging / monitoring
 

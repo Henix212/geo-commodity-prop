@@ -9,6 +9,8 @@ __all__ = [
     "parse_articles",
     "filter_events",
     "inject_events_into_network",
+    "effective_severity",
+    "decay_factor",
     "build_gazetteer",
     "resolve_entity",
 ]
@@ -25,6 +27,8 @@ def __getattr__(name: str):
         "parse_articles",
         "filter_events",
         "inject_events_into_network",
+        "effective_severity",
+        "decay_factor",
     }:
         from backend.ingestion import parser_llm
 

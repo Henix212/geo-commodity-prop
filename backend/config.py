@@ -38,6 +38,37 @@ TICKERS: dict[str, str] = {
     "corn": os.getenv("GCP_TICKER_CORN", "ZC=F"),
 }
 
+# Venue-tagged series for LME / SHFE / COMEX (yfinance proxies where needed).
+# Format: commodity -> venue -> yahoo ticker
+VENUE_TICKERS: dict[str, dict[str, str]] = {
+    "copper": {
+        "COMEX": os.getenv("GCP_TICKER_COPPER_COMEX", "HG=F"),
+        "LME": os.getenv("GCP_TICKER_COPPER_LME", "HG=F"),  # proxy until dedicated LME feed
+        "SHFE": os.getenv("GCP_TICKER_COPPER_SHFE", "HG=F"),  # proxy
+    },
+    "aluminum": {
+        "COMEX": os.getenv("GCP_TICKER_ALUMINUM_COMEX", "ALI=F"),
+        "LME": os.getenv("GCP_TICKER_ALUMINUM_LME", "ALI=F"),
+        "SHFE": os.getenv("GCP_TICKER_ALUMINUM_SHFE", "ALI=F"),
+    },
+    "gold": {
+        "COMEX": os.getenv("GCP_TICKER_GOLD_COMEX", "GC=F"),
+        "LME": os.getenv("GCP_TICKER_GOLD_LME", "GC=F"),
+        "SHFE": os.getenv("GCP_TICKER_GOLD_SHFE", "GC=F"),
+    },
+    "silver": {
+        "COMEX": os.getenv("GCP_TICKER_SILVER_COMEX", "SI=F"),
+        "LME": os.getenv("GCP_TICKER_SILVER_LME", "SI=F"),
+        "SHFE": os.getenv("GCP_TICKER_SILVER_SHFE", "SI=F"),
+    },
+    "oil": {"NYMEX": os.getenv("GCP_TICKER_OIL", "CL=F")},
+    "lng": {"NYMEX": os.getenv("GCP_TICKER_LNG", "NG=F")},
+    "wheat": {"CBOT": os.getenv("GCP_TICKER_WHEAT", "ZW=F")},
+    "corn": {"CBOT": os.getenv("GCP_TICKER_CORN", "ZC=F")},
+}
+
+SEED_DIR = BACKEND_DIR / "database" / "seed"
+
 # ---------------------------------------------------------------------------
 # Event / model thresholds
 # ---------------------------------------------------------------------------

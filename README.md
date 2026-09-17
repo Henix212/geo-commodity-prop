@@ -61,5 +61,15 @@ uv run python -m backend.ingestion.parser_llm --limit 1 --sector metals
 uv run python -m backend.main --sector metals --from-db --parse-limit 1
 # On GPU:
 # GCP_DEVICE=cuda uv run python -m backend.main --sector metals --from-db --parse-limit 5
+
+# Re-inject persisted events with time decay (no LLM):
+# uv run python -m backend.main --sector metals --skip-ingest
+# Half-life (hours): GCP_EVENT_DECAY_HALF_LIFE_HOURS=72
+
+# Reference data (production / TC-RC / policies) + prices
+uv run python -m backend.database.seed_data
+uv run python -m backend.quant.market_data --commodity copper --venue COMEX --period 1y
+# uv run python -m backend.quant.market_data --commodity metals --period 2y
 ```
+
 
