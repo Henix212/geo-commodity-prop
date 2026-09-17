@@ -17,6 +17,9 @@ dependencies = [
     "huggingface-hub>=1.31.0",
     "matplotlib>=3.10.9",
     "accelerate>=1.15.0",
+    "plotly<6",
+    "streamlit>=1.64.0",
+    "pyvis>=0.3.2",
 ]
 
 [build-system]
