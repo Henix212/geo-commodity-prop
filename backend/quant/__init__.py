@@ -9,6 +9,7 @@ __all__ = [
     "make_signals",
     "primary_signal",
     "backtest_commodity",
+    "backtest_series",
     "run_scenario",
 ]
 
@@ -28,7 +29,7 @@ def __getattr__(name: str):
         from backend.quant import strategy
 
         return getattr(strategy, name)
-    if name in {"backtest_commodity"}:
+    if name in {"backtest_commodity", "backtest_series"}:
         from backend.quant import backtest
 
         return getattr(backtest, name)

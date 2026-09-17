@@ -22,13 +22,19 @@ def _positions_from_tension_series(tension: pd.Series) -> pd.Series:
     return sides.map({"long": 1.0, "short": -1.0, "flat": 0.0}).astype(float)
 
 
+def _strategy_returns(close: pd.Series, positions: pd.Series) -> tuple[pd.Series, pd.Series]:
+    """Return (strategy_returns, equity_curve) with 5 bps turnover cost."""
+    pos = positions.reindex(close.index).fillna(0.0)
+    rets = close.pct_change().fillna(0.0)
+    strat = (pos.shift(1).fillna(0.0) * rets) - 0.0005 * pos.diff().abs().fillna(0.0)
+    equity = (1.0 + strat).cumprod()
+    return strat, equity
+
+
 def _numpy_backtest(close: pd.Series, positions: pd.Series) -> dict[str, Any]:
     """Sharpe / max DD / turnover without VectorBT (fallback)."""
     pos = positions.reindex(close.index).fillna(0.0)
-    rets = close.pct_change().fillna(0.0)
-    # position known at close_t applied to return_{t+1}
-    strat = (pos.shift(1).fillna(0.0) * rets) - 0.0005 * pos.diff().abs().fillna(0.0)
-    equity = (1.0 + strat).cumprod()
+    strat, equity = _strategy_returns(close, positions)
     mu = float(strat.mean())
     sigma = float(strat.std(ddof=0)) or 1e-12
     sharpe = mu / sigma * np.sqrt(252.0)
@@ -44,6 +50,32 @@ def _numpy_backtest(close: pd.Series, positions: pd.Series) -> dict[str, Any]:
         "total_return": float(total_return) * 100.0,
         "turnover": turnover,
     }
+
+
+def backtest_series(
+    close: pd.Series,
+    tension: pd.Series | float,
+) -> tuple[dict[str, Any], pd.Series, pd.Series, pd.Series]:
+    """Metrics + equity + positions + drawdown for charting.
+
+    Returns ``(metrics, equity, positions, drawdown)`` where drawdown is in %.
+    """
+    if isinstance(tension, (int, float)):
+        tension_s = pd.Series(float(tension), index=close.index)
+    else:
+        tension_s = tension.reindex(close.index).ffill().fillna(0.5)
+
+    positions = _positions_from_tension_series(tension_s)
+    try:
+        metrics = _vectorbt_backtest(close, positions)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("VectorBT unavailable (%s) — using numpy fallback", exc)
+        metrics = _numpy_backtest(close, positions)
+
+    _, equity = _strategy_returns(close, positions)
+    peak = equity.cummax()
+    drawdown = (equity / peak - 1.0) * 100.0
+    return metrics, equity, positions, drawdown
 
 
 def _vectorbt_backtest(close: pd.Series, positions: pd.Series) -> dict[str, Any]:
@@ -96,6 +128,7 @@ def backtest_commodity(
     venue: str | None = None,
     constant_tension: float | None = None,
     tension_series: pd.Series | None = None,
+    return_series: bool = False,
 ) -> dict[str, Any]:
     prices = load_price_frame(commodity, venue=venue)
     if prices.empty or "close" not in prices.columns:
@@ -103,27 +136,27 @@ def backtest_commodity(
 
     close = prices["close"].astype(float).dropna()
     if constant_tension is not None:
-        tension = pd.Series(constant_tension, index=close.index)
+        tension: pd.Series | float = float(constant_tension)
     elif tension_series is not None:
-        tension = tension_series.reindex(close.index).ffill().fillna(0.5)
+        tension = tension_series
     else:
         ret = close.pct_change().abs()
         tension = ret.rolling(20, min_periods=5).mean().fillna(0.0)
         mx = float(tension.max()) or 1.0
         tension = (tension / mx).clip(0, 1)
 
-    positions = _positions_from_tension_series(tension)
-    try:
-        metrics = _vectorbt_backtest(close, positions)
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("VectorBT unavailable (%s) — using numpy fallback", exc)
-        metrics = _numpy_backtest(close, positions)
-
-    return {
+    metrics, equity, positions, drawdown = backtest_series(close, tension)
+    out: dict[str, Any] = {
         "commodity": commodity,
         "ticker": config.TICKERS.get(commodity),
         **metrics,
     }
+    if return_series:
+        out["equity"] = equity
+        out["positions"] = positions
+        out["drawdown"] = drawdown
+        out["close"] = close
+    return out
 
 
 def run_smoke_backtest(
