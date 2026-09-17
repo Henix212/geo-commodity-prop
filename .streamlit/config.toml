@@ -1,0 +1,6 @@
+[server]
+# Avoid Streamlit walking transformers lazy modules (torchvision spam).
+fileWatcherType = "poll"
+
+[browser]
+gatherUsageStats = false
