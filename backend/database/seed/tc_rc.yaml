@@ -1,0 +1,62 @@
+# Copper concentrate Treatment Charge / Refining Charge by physical route.
+# Units: TC USD/dmt concentrate, RC USc/lb payable Cu. Illustrative mid-cycle levels.
+commodity: copper
+source: "illustrative — spot TC/RC proxies"
+rows:
+  - from_node: mine_chuquicamata
+    to_node: smelter_chuquicamata
+    tc_usd_per_dmt: 25.0
+    rc_usc_per_lb: 2.5
+    effective_from: "2024-01-01"
+    notes: "captive Codelco route"
+  - from_node: mine_cerro_verde
+    to_node: smelter_ilo
+    tc_usd_per_dmt: 55.0
+    rc_usc_per_lb: 5.5
+    effective_from: "2024-01-01"
+  - from_node: mine_morenci
+    to_node: smelter_glencore_pas
+    tc_usd_per_dmt: 50.0
+    rc_usc_per_lb: 5.0
+    effective_from: "2024-01-01"
+  - from_node: hub_qingdao_transship
+    to_node: smelter_jiangxi
+    tc_usd_per_dmt: 45.0
+    rc_usc_per_lb: 4.5
+    effective_from: "2024-01-01"
+    notes: "China spot mid"
+  - from_node: hub_qingdao_transship
+    to_node: smelter_tongling
+    tc_usd_per_dmt: 42.0
+    rc_usc_per_lb: 4.2
+    effective_from: "2024-01-01"
+  - from_node: hub_shanghai_transship
+    to_node: smelter_shanghai
+    tc_usd_per_dmt: 40.0
+    rc_usc_per_lb: 4.0
+    effective_from: "2024-01-01"
+  - from_node: port_ningbo
+    to_node: smelter_tongling
+    tc_usd_per_dmt: 43.0
+    rc_usc_per_lb: 4.3
+    effective_from: "2024-01-01"
+  - from_node: port_busan
+    to_node: smelter_onsan
+    tc_usd_per_dmt: 48.0
+    rc_usc_per_lb: 4.8
+    effective_from: "2024-01-01"
+  - from_node: port_hamburg
+    to_node: smelter_aurubis_hamburg
+    tc_usd_per_dmt: 60.0
+    rc_usc_per_lb: 6.0
+    effective_from: "2024-01-01"
+  - from_node: port_rotterdam
+    to_node: smelter_aurubis_hamburg
+    tc_usd_per_dmt: 58.0
+    rc_usc_per_lb: 5.8
+    effective_from: "2024-01-01"
+  - from_node: port_san_antonio
+    to_node: smelter_alho
+    tc_usd_per_dmt: 35.0
+    rc_usc_per_lb: 3.5
+    effective_from: "2024-01-01"

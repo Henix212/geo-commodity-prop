@@ -1,0 +1,49 @@
+# Illustrative annual mine production vs nameplate capacity_kt (copper, contained Cu).
+# Replace with USGS / ICSG / company filings when wiring live refresh jobs.
+year: 2024
+commodity: copper
+as_of: "2025-01-15"
+source: "illustrative — USGS/ICSG/company reports proxies"
+rows:
+  - node_id: mine_escondida
+    production_kt: 1050
+    capacity_kt: 1200
+  - node_id: mine_collahuasi
+    production_kt: 510
+    capacity_kt: 570
+  - node_id: mine_chuquicamata
+    production_kt: 280
+    capacity_kt: 350
+  - node_id: mine_el_teniente
+    production_kt: 350
+    capacity_kt: 400
+  - node_id: mine_cerro_verde
+    production_kt: 420
+    capacity_kt: 450
+  - node_id: mine_antamina
+    production_kt: 380
+    capacity_kt: 400
+  - node_id: mine_morenci
+    production_kt: 370
+    capacity_kt: 400
+  - node_id: mine_grasberg
+    production_kt: 620
+    capacity_kt: 700
+  - node_id: mine_kansanshi
+    production_kt: 220
+    capacity_kt: 250
+  - node_id: mine_kamoa_kakula
+    production_kt: 400
+    capacity_kt: 450
+  - node_id: mine_las_bambas
+    production_kt: 260
+    capacity_kt: 300
+  - node_id: mine_lumwana
+    production_kt: 210
+    capacity_kt: 250
+  - node_id: mine_sentinel
+    production_kt: 230
+    capacity_kt: 250
+  - node_id: mine_mutanda
+    production_kt: 160
+    capacity_kt: 200

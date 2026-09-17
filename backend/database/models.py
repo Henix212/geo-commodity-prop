@@ -258,3 +258,575 @@ def list_events(
     if owns:
         conn.close()
     return result
+
+
+# ---------------------------------------------------------------------------
+# Node production (actual vs nameplate)
+# ---------------------------------------------------------------------------
+
+
+def upsert_production(
+    rows: list[dict[str, Any]],
+    conn: sqlite3.Connection | None = None,
+) -> UpsertResult:
+    owns = conn is None
+    conn = conn or connect()
+    init_db(conn)
+    inserted = updated = 0
+
+    for row in rows:
+        node_id = row["node_id"]
+        commodity = row["commodity"]
+        year = int(row["year"])
+        production_kt = float(row["production_kt"])
+        capacity_kt = row.get("capacity_kt")
+        capacity_kt = float(capacity_kt) if capacity_kt is not None else None
+        util = row.get("utilization")
+        if util is None and capacity_kt and capacity_kt > 0:
+            util = production_kt / capacity_kt
+        util = float(util) if util is not None else None
+
+        existing = conn.execute(
+            "SELECT id FROM node_production WHERE node_id = ? AND commodity = ? AND year = ?",
+            (node_id, commodity, year),
+        ).fetchone()
+
+        if existing is None:
+            conn.execute(
+                """
+                INSERT INTO node_production (
+                    node_id, commodity, year, production_kt, capacity_kt,
+                    utilization, source, as_of, notes
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    node_id,
+                    commodity,
+                    year,
+                    production_kt,
+                    capacity_kt,
+                    util,
+                    row.get("source") or "",
+                    row.get("as_of") or "",
+                    row.get("notes") or "",
+                ),
+            )
+            inserted += 1
+        else:
+            conn.execute(
+                """
+                UPDATE node_production SET
+                    production_kt = ?, capacity_kt = ?, utilization = ?,
+                    source = ?, as_of = ?, notes = ?
+                WHERE id = ?
+                """,
+                (
+                    production_kt,
+                    capacity_kt,
+                    util,
+                    row.get("source") or "",
+                    row.get("as_of") or "",
+                    row.get("notes") or "",
+                    existing["id"],
+                ),
+            )
+            updated += 1
+
+    conn.commit()
+    total = conn.execute("SELECT COUNT(*) FROM node_production").fetchone()[0]
+    if owns:
+        conn.close()
+    return UpsertResult(inserted=inserted, updated=updated, total=total)
+
+
+def list_production(
+    *,
+    commodity: str | None = None,
+    year: int | None = None,
+    node_id: str | None = None,
+    limit: int = 500,
+    conn: sqlite3.Connection | None = None,
+) -> list[dict]:
+    owns = conn is None
+    conn = conn or connect()
+    init_db(conn)
+    clauses: list[str] = []
+    params: list[Any] = []
+    if commodity:
+        clauses.append("commodity = ?")
+        params.append(commodity)
+    if year is not None:
+        clauses.append("year = ?")
+        params.append(year)
+    if node_id:
+        clauses.append("node_id = ?")
+        params.append(node_id)
+    where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    params.append(limit)
+    rows = conn.execute(
+        f"""
+        SELECT id, node_id, commodity, year, production_kt, capacity_kt,
+               utilization, source, as_of, notes
+        FROM node_production
+        {where}
+        ORDER BY year DESC, node_id
+        LIMIT ?
+        """,
+        params,
+    ).fetchall()
+    result = [dict(r) for r in rows]
+    if owns:
+        conn.close()
+    return result
+
+
+def apply_production_to_network(
+    network: dict,
+    *,
+    year: int | None = None,
+    conn: sqlite3.Connection | None = None,
+) -> int:
+    """Set node production_kt / utilization from DB (latest year if unspecified)."""
+    owns = conn is None
+    conn = conn or connect()
+    init_db(conn)
+    if year is None:
+        row = conn.execute("SELECT MAX(year) AS y FROM node_production").fetchone()
+        year = int(row["y"]) if row and row["y"] is not None else None
+    if year is None:
+        if owns:
+            conn.close()
+        return 0
+
+    by_id = {n["id"]: n for n in network.get("nodes") or [] if n.get("id")}
+    touched = 0
+    for rec in list_production(year=year, limit=5000, conn=conn):
+        node = by_id.get(rec["node_id"])
+        if not node:
+            continue
+        node["production_kt"] = rec["production_kt"]
+        if rec.get("capacity_kt") is not None:
+            node["capacity_kt"] = rec["capacity_kt"]
+        cap = float(node.get("capacity_kt") or 0) or None
+        util = rec.get("utilization")
+        if util is None and cap:
+            util = float(rec["production_kt"]) / cap
+        if util is not None:
+            node["utilization"] = float(util)
+        node["production_year"] = year
+        touched += 1
+    if owns:
+        conn.close()
+    return touched
+
+
+# ---------------------------------------------------------------------------
+# TC / RC by route
+# ---------------------------------------------------------------------------
+
+
+def upsert_tc_rc(
+    rows: list[dict[str, Any]],
+    conn: sqlite3.Connection | None = None,
+) -> UpsertResult:
+    owns = conn is None
+    conn = conn or connect()
+    init_db(conn)
+    inserted = updated = 0
+
+    for row in rows:
+        key = (
+            row["commodity"],
+            row["from_node"],
+            row["to_node"],
+            row["effective_from"],
+        )
+        existing = conn.execute(
+            """
+            SELECT id FROM tc_rc
+            WHERE commodity = ? AND from_node = ? AND to_node = ? AND effective_from = ?
+            """,
+            key,
+        ).fetchone()
+        tc = row.get("tc_usd_per_dmt")
+        rc = row.get("rc_usc_per_lb")
+        vals = (
+            float(tc) if tc is not None else None,
+            float(rc) if rc is not None else None,
+            row.get("effective_to"),
+            row.get("source") or "",
+            row.get("notes") or "",
+        )
+        if existing is None:
+            conn.execute(
+                """
+                INSERT INTO tc_rc (
+                    commodity, from_node, to_node, tc_usd_per_dmt, rc_usc_per_lb,
+                    effective_from, effective_to, source, notes
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (*key[:3], vals[0], vals[1], key[3], vals[2], vals[3], vals[4]),
+            )
+            inserted += 1
+        else:
+            conn.execute(
+                """
+                UPDATE tc_rc SET
+                    tc_usd_per_dmt = ?, rc_usc_per_lb = ?,
+                    effective_to = ?, source = ?, notes = ?
+                WHERE id = ?
+                """,
+                (*vals, existing["id"]),
+            )
+            updated += 1
+
+    conn.commit()
+    total = conn.execute("SELECT COUNT(*) FROM tc_rc").fetchone()[0]
+    if owns:
+        conn.close()
+    return UpsertResult(inserted=inserted, updated=updated, total=total)
+
+
+def list_tc_rc(
+    *,
+    commodity: str | None = None,
+    as_of: str | None = None,
+    limit: int = 500,
+    conn: sqlite3.Connection | None = None,
+) -> list[dict]:
+    owns = conn is None
+    conn = conn or connect()
+    init_db(conn)
+    clauses: list[str] = []
+    params: list[Any] = []
+    if commodity:
+        clauses.append("commodity = ?")
+        params.append(commodity)
+    if as_of:
+        clauses.append("effective_from <= ?")
+        params.append(as_of)
+        clauses.append("(effective_to IS NULL OR effective_to = '' OR effective_to >= ?)")
+        params.append(as_of)
+    where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    params.append(limit)
+    rows = conn.execute(
+        f"""
+        SELECT id, commodity, from_node, to_node, tc_usd_per_dmt, rc_usc_per_lb,
+               effective_from, effective_to, source, notes
+        FROM tc_rc
+        {where}
+        ORDER BY effective_from DESC, from_node, to_node
+        LIMIT ?
+        """,
+        params,
+    ).fetchall()
+    result = [dict(r) for r in rows]
+    if owns:
+        conn.close()
+    return result
+
+
+def apply_tc_rc_to_network(
+    network: dict,
+    *,
+    as_of: str | None = None,
+    commodity: str | None = None,
+    conn: sqlite3.Connection | None = None,
+) -> int:
+    """Annotate matching edges with tc_usd_per_dmt / rc_usc_per_lb."""
+    from datetime import date
+
+    as_of = as_of or date.today().isoformat()
+    records = list_tc_rc(commodity=commodity, as_of=as_of, limit=5000, conn=conn)
+    by_route = {(r["from_node"], r["to_node"]): r for r in reversed(records)}
+    touched = 0
+    for edge in network.get("edges") or []:
+        key = (edge.get("source"), edge.get("target"))
+        rec = by_route.get(key)
+        if not rec:
+            continue
+        if rec.get("tc_usd_per_dmt") is not None:
+            edge["tc_usd_per_dmt"] = rec["tc_usd_per_dmt"]
+        if rec.get("rc_usc_per_lb") is not None:
+            edge["rc_usc_per_lb"] = rec["rc_usc_per_lb"]
+        edge["tc_rc_as_of"] = as_of
+        touched += 1
+    return touched
+
+
+# ---------------------------------------------------------------------------
+# Prices
+# ---------------------------------------------------------------------------
+
+
+def upsert_prices(
+    rows: list[dict[str, Any]],
+    conn: sqlite3.Connection | None = None,
+) -> UpsertResult:
+    owns = conn is None
+    conn = conn or connect()
+    init_db(conn)
+    inserted = updated = 0
+
+    for row in rows:
+        ticker = row["ticker"]
+        day = row["date"]
+        existing = conn.execute(
+            "SELECT ticker FROM prices WHERE ticker = ? AND venue = ? AND date = ?",
+            (ticker, row.get("venue") or "", day),
+        ).fetchone()
+        vals = (
+            row.get("venue") or "",
+            row.get("commodity") or "",
+            row.get("open"),
+            row.get("high"),
+            row.get("low"),
+            row.get("close"),
+            row.get("volume"),
+            row.get("source") or "yfinance",
+        )
+        if existing is None:
+            conn.execute(
+                """
+                INSERT INTO prices (
+                    ticker, venue, commodity, date, open, high, low, close, volume, source
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (ticker, vals[0], vals[1], day, *vals[2:]),
+            )
+            inserted += 1
+        else:
+            conn.execute(
+                """
+                UPDATE prices SET
+                    commodity = ?, open = ?, high = ?, low = ?,
+                    close = ?, volume = ?, source = ?
+                WHERE ticker = ? AND venue = ? AND date = ?
+                """,
+                (
+                    vals[1],
+                    vals[2],
+                    vals[3],
+                    vals[4],
+                    vals[5],
+                    vals[6],
+                    vals[7],
+                    ticker,
+                    vals[0],
+                    day,
+                ),
+            )
+            updated += 1
+
+    conn.commit()
+    total = conn.execute("SELECT COUNT(*) FROM prices").fetchone()[0]
+    if owns:
+        conn.close()
+    return UpsertResult(inserted=inserted, updated=updated, total=total)
+
+
+def list_prices(
+    *,
+    ticker: str | None = None,
+    commodity: str | None = None,
+    venue: str | None = None,
+    start: str | None = None,
+    end: str | None = None,
+    limit: int = 5000,
+    conn: sqlite3.Connection | None = None,
+) -> list[dict]:
+    owns = conn is None
+    conn = conn or connect()
+    init_db(conn)
+    clauses: list[str] = []
+    params: list[Any] = []
+    if ticker:
+        clauses.append("ticker = ?")
+        params.append(ticker)
+    if commodity:
+        clauses.append("commodity = ?")
+        params.append(commodity)
+    if venue:
+        clauses.append("venue = ?")
+        params.append(venue)
+    if start:
+        clauses.append("date >= ?")
+        params.append(start)
+    if end:
+        clauses.append("date <= ?")
+        params.append(end)
+    where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    params.append(limit)
+    rows = conn.execute(
+        f"""
+        SELECT ticker, venue, commodity, date, open, high, low, close, volume, source
+        FROM prices
+        {where}
+        ORDER BY date ASC
+        LIMIT ?
+        """,
+        params,
+    ).fetchall()
+    result = [dict(r) for r in rows]
+    if owns:
+        conn.close()
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Trade-policy constraints
+# ---------------------------------------------------------------------------
+
+
+def upsert_policies(
+    rows: list[dict[str, Any]],
+    conn: sqlite3.Connection | None = None,
+) -> UpsertResult:
+    owns = conn is None
+    conn = conn or connect()
+    init_db(conn)
+    inserted = updated = 0
+
+    for row in rows:
+        pid = row["id"]
+        existing = conn.execute("SELECT id FROM policies WHERE id = ?", (pid,)).fetchone()
+        applies = row.get("applies_to_nodes") or ""
+        if isinstance(applies, list):
+            applies = ",".join(applies)
+        vals = (
+            row["jurisdiction"],
+            row.get("commodity") or "",
+            row["policy_type"],
+            row["title"],
+            row.get("description") or "",
+            row.get("constraint_value"),
+            row.get("unit") or "",
+            float(row.get("severity") or 0.5),
+            row["effective_from"],
+            row.get("effective_to"),
+            applies,
+            row.get("source") or "",
+            row.get("notes") or "",
+        )
+        if existing is None:
+            conn.execute(
+                """
+                INSERT INTO policies (
+                    id, jurisdiction, commodity, policy_type, title, description,
+                    constraint_value, unit, severity, effective_from, effective_to,
+                    applies_to_nodes, source, notes
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (pid, *vals),
+            )
+            inserted += 1
+        else:
+            conn.execute(
+                """
+                UPDATE policies SET
+                    jurisdiction = ?, commodity = ?, policy_type = ?, title = ?,
+                    description = ?, constraint_value = ?, unit = ?, severity = ?,
+                    effective_from = ?, effective_to = ?, applies_to_nodes = ?,
+                    source = ?, notes = ?
+                WHERE id = ?
+                """,
+                (*vals, pid),
+            )
+            updated += 1
+
+    conn.commit()
+    total = conn.execute("SELECT COUNT(*) FROM policies").fetchone()[0]
+    if owns:
+        conn.close()
+    return UpsertResult(inserted=inserted, updated=updated, total=total)
+
+
+def list_policies(
+    *,
+    commodity: str | None = None,
+    jurisdiction: str | None = None,
+    as_of: str | None = None,
+    active_only: bool = True,
+    limit: int = 500,
+    conn: sqlite3.Connection | None = None,
+) -> list[dict]:
+    owns = conn is None
+    conn = conn or connect()
+    init_db(conn)
+    clauses: list[str] = []
+    params: list[Any] = []
+    if commodity:
+        clauses.append("(commodity = ? OR commodity = '' OR commodity = '*')")
+        params.append(commodity)
+    if jurisdiction:
+        clauses.append("jurisdiction = ?")
+        params.append(jurisdiction)
+    if as_of and active_only:
+        clauses.append("effective_from <= ?")
+        params.append(as_of)
+        clauses.append("(effective_to IS NULL OR effective_to = '' OR effective_to >= ?)")
+        params.append(as_of)
+    where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    params.append(limit)
+    rows = conn.execute(
+        f"""
+        SELECT id, jurisdiction, commodity, policy_type, title, description,
+               constraint_value, unit, severity, effective_from, effective_to,
+               applies_to_nodes, source, notes
+        FROM policies
+        {where}
+        ORDER BY effective_from DESC, jurisdiction
+        LIMIT ?
+        """,
+        params,
+    ).fetchall()
+    result = [dict(r) for r in rows]
+    if owns:
+        conn.close()
+    return result
+
+
+def apply_policies_to_network(
+    network: dict,
+    *,
+    as_of: str | None = None,
+    commodity: str | None = None,
+    conn: sqlite3.Connection | None = None,
+) -> int:
+    """Attach active policies onto matching nodes (policy_ids / policy_severity)."""
+    from datetime import date
+
+    as_of = as_of or date.today().isoformat()
+    policies = list_policies(
+        commodity=commodity, as_of=as_of, active_only=True, limit=5000, conn=conn
+    )
+    by_id = {n["id"]: n for n in network.get("nodes") or [] if n.get("id")}
+    touched = 0
+    for pol in policies:
+        targets = [
+            t.strip()
+            for t in str(pol.get("applies_to_nodes") or "").split(",")
+            if t.strip()
+        ]
+        if not targets:
+            jur = (pol.get("jurisdiction") or "").lower()
+            targets = [
+                nid
+                for nid, n in by_id.items()
+                if str(n.get("country") or "").lower() == jur
+            ]
+        for nid in targets:
+            node = by_id.get(nid)
+            if not node:
+                continue
+            ids = list(node.get("policy_ids") or [])
+            if pol["id"] not in ids:
+                ids.append(pol["id"])
+            node["policy_ids"] = ids
+            prev = float(node.get("policy_severity") or 0.0)
+            sev = float(pol.get("severity") or 0.0)
+            if sev >= prev:
+                node["policy_severity"] = sev
+                node["policy_title"] = pol["title"]
+            touched += 1
+    return touched

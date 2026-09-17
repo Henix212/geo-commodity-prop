@@ -1,0 +1,78 @@
+# Dated trade / fiscal constraints affecting physical commodity flows.
+# applies_to_nodes: comma-separated node ids; empty → match nodes by country==jurisdiction.
+rows:
+  - id: id_ore_export_ban_2014
+    jurisdiction: Indonesia
+    commodity: copper
+    policy_type: export_ban
+    title: "Indonesia unprocessed ore export ban"
+    description: >
+      Ban / tight restriction on unprocessed mineral ore exports; pushes domestic
+      smelting and constrains Grasberg concentrate optionality.
+    severity: 0.75
+    effective_from: "2014-01-12"
+    effective_to: null
+    applies_to_nodes: [mine_grasberg]
+    source: "Indonesia Ministry of Energy and Mineral Resources (illustrative)"
+
+  - id: cl_mining_royalty_2023
+    jurisdiction: Chile
+    commodity: copper
+    policy_type: royalty
+    title: "Chile mining royalty reform"
+    description: >
+      Ad-valorem / operating-margin royalty on large copper producers; raises
+      fiscal take and can delay expansions.
+    constraint_value: 8.0
+    unit: "%_ad_valorem_proxy"
+    severity: 0.45
+    effective_from: "2024-01-01"
+    effective_to: null
+    applies_to_nodes:
+      - mine_escondida
+      - mine_collahuasi
+      - mine_chuquicamata
+      - mine_el_teniente
+    source: "Chile Ley de Royalty Minero (illustrative)"
+
+  - id: pe_community_blockade_risk
+    jurisdiction: Peru
+    commodity: copper
+    policy_type: social_license
+    title: "Peru community blockade / social-license risk"
+    description: >
+      Recurrent community protests and road blockades affecting Andean copper
+      logistics (Las Bambas corridor and peers).
+    severity: 0.55
+    effective_from: "2018-01-01"
+    effective_to: null
+    applies_to_nodes: [mine_las_bambas, mine_antamina, mine_cerro_verde]
+    source: "operational risk composite (illustrative)"
+
+  - id: cd_export_permit_regime
+    jurisdiction: "DR Congo"
+    commodity: copper
+    policy_type: export_permit
+    title: "DRC concentrate export permit / local processing push"
+    description: >
+      Export licensing and domestic processing incentives for copper/cobalt
+      concentrates from Kamoa-Kakula / Mutanda corridors.
+    severity: 0.5
+    effective_from: "2021-01-01"
+    effective_to: null
+    applies_to_nodes: [mine_kamoa_kakula, mine_mutanda]
+    source: "DRC mining code / decrees (illustrative)"
+
+  - id: cn_scrap_import_standards
+    jurisdiction: China
+    commodity: copper
+    policy_type: import_standard
+    title: "China copper scrap import quality standards"
+    description: >
+      Tightened scrap import categories reduce low-grade scrap inflows into
+      Chinese smelters / refiners.
+    severity: 0.4
+    effective_from: "2018-12-31"
+    effective_to: null
+    applies_to_nodes: [scrap_hub_china, smelter_jiangxi, smelter_tongling, smelter_shanghai]
+    source: "China MEA / customs (illustrative)"
