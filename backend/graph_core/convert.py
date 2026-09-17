@@ -113,6 +113,9 @@ def node_feature_vector(node: dict[str, Any]) -> list[float]:
     feats.append(_f(node, "lon"))
     feats.append(_f(node, "event_severity"))
     feats.append(_f(node, "capacity_ships_per_day"))
+    feats.append(_f(node, "utilization"))
+    feats.append(_f(node, "production_kt"))
+    feats.append(_f(node, "policy_severity"))
     return feats
 
 
@@ -124,6 +127,9 @@ def edge_feature_vector(edge: dict[str, Any]) -> list[float]:
     feats.append(_f(edge, "transit_days"))
     feats.append(_f(edge, "transit_days_min"))
     feats.append(_f(edge, "transit_days_max"))
+    # Normalize rough TC/RC scales into ~[0,1] for GNN stability
+    feats.append(min(_f(edge, "tc_usd_per_dmt") / 100.0, 2.0))
+    feats.append(min(_f(edge, "rc_usc_per_lb") / 10.0, 2.0))
     return feats
 
 

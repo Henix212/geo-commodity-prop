@@ -68,6 +68,9 @@ VENUE_TICKERS: dict[str, dict[str, str]] = {
 }
 
 SEED_DIR = BACKEND_DIR / "database" / "seed"
+DASHBOARD_STATE_PATH = Path(
+    os.getenv("GCP_DASHBOARD_STATE", DATA_DIR / "dashboard_state.json")
+)
 
 # ---------------------------------------------------------------------------
 # Event / model thresholds
@@ -112,8 +115,23 @@ LLM_MODEL_PATH = os.getenv(
 LLM_MAX_NEW_TOKENS = int(os.getenv("GCP_LLM_MAX_NEW_TOKENS", "256"))
 LLM_PARSE_LIMIT = int(os.getenv("GCP_LLM_PARSE_LIMIT", "20"))
 
+# ---------------------------------------------------------------------------
+# GNN / inference
+# ---------------------------------------------------------------------------
+GNN_CHECKPOINT_DIR = Path(os.getenv("GCP_GNN_CHECKPOINT_DIR", DATA_DIR / "checkpoints"))
+GNN_HIDDEN = int(os.getenv("GCP_GNN_HIDDEN", "64"))
+GNN_HEADS = int(os.getenv("GCP_GNN_HEADS", "4"))
+GNN_LAYERS = int(os.getenv("GCP_GNN_LAYERS", "2"))
+GNN_EPOCHS = int(os.getenv("GCP_GNN_EPOCHS", "30"))
+GNN_LR = float(os.getenv("GCP_GNN_LR", "1e-3"))
+INFERENCE_BACKEND = os.getenv("GCP_INFERENCE_BACKEND", "auto")  # auto | diffusion | gat
+DIFFUSION_STEPS = int(os.getenv("GCP_DIFFUSION_STEPS", "8"))
+DIFFUSION_ALPHA = float(os.getenv("GCP_DIFFUSION_ALPHA", "0.35"))
+LABEL_HORIZON_DAYS = int(os.getenv("GCP_LABEL_HORIZON_DAYS", "5"))
+
 
 def ensure_dirs() -> None:
     """Create runtime directories if missing."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
+    GNN_CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
