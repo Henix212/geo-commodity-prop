@@ -7,6 +7,8 @@ nodes:
     description: "Route maritime Pacifique Sud (Chili/Perou -> Asie)"
     capacity_ships_per_day: null
     notes: "Open-ocean corridor; capacity limited by fleet/port pairs, not a canal"
+    lat: -25.0
+    lon: -110.0
 
   - id: chokepoint_panama
     commodity: cross_metal
@@ -15,6 +17,8 @@ nodes:
     country: Panama
     capacity_ships_per_day: 36
     capacity_notes: "Approx. neo-Panamax daily transit capacity (order of magnitude)"
+    lat: 9.08
+    lon: -79.68
 
   - id: chokepoint_malacca
     commodity: cross_metal
@@ -23,6 +27,8 @@ nodes:
     country: Malaysia/Indonesia/Singapore
     capacity_ships_per_day: 200
     capacity_notes: "High-throughput strait; congestion risk is political/piracy more than hard cap"
+    lat: 2.50
+    lon: 101.50
 
   - id: chokepoint_bab_el_mandeb
     commodity: cross_metal
@@ -31,6 +37,8 @@ nodes:
     country: Yemen/Djibouti
     capacity_ships_per_day: 60
     capacity_notes: "Security-sensitive; disruptions divert traffic to Cape"
+    lat: 12.58
+    lon: 43.33
 
   - id: chokepoint_hormuz
     commodity: cross_commodity
@@ -49,6 +57,8 @@ nodes:
     country: Egypt
     capacity_ships_per_day: 52
     capacity_notes: "Approx. daily vessel capacity under normal operations"
+    lat: 30.45
+    lon: 32.35
 
   - id: chokepoint_cape_hope
     commodity: cross_metal
@@ -57,6 +67,8 @@ nodes:
     country: South Africa
     capacity_ships_per_day: null
     notes: "Fallback route; adds ~10-14 days vs Suez on Asia-Europe"
+    lat: -34.35
+    lon: 18.47
 
   - id: chokepoint_bosphorus
     commodity: cross_commodity
