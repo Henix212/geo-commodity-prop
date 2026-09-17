@@ -1,4 +1,4 @@
-"""Entry point: build graph → events → (inference) → (signal)."""
+"""Entry point: build graph → events → inference → signal."""
 
 from __future__ import annotations
 
@@ -7,12 +7,12 @@ import logging
 
 from backend import config
 from backend.graph_core import feature_dims, load_sector, to_networkx, to_pyg, validate_network
-
+from backend.logging_setup import configure_logging
 
 logger = logging.getLogger(__name__)
 
 
-def build_graph(sector: str, *, apply_reference: bool = True) -> dict:
+def build_graph(sector: str, *, apply_reference: bool = True, sync_mirror: bool = True) -> dict:
     network = load_sector(sector, validate=True)
     logger.info(
         "Loaded %s: %d nodes, %d edges, commodities=%s",
@@ -40,11 +40,20 @@ def build_graph(sector: str, *, apply_reference: bool = True) -> dict:
             n_tc,
             n_pol,
         )
+    if sync_mirror:
+        from backend.database import sync_graph_mirror
+
+        result = sync_graph_mirror(network)
+        logger.info(
+            "Graph mirror synced for %s: rows=%d",
+            network.get("sector"),
+            result.total,
+        )
     return network
 
 
 def graph_tensors(network: dict) -> tuple:
-    """Build NetworkX + PyG views (Phase 1)."""
+    """Build NetworkX + PyG views (call after event inject)."""
     g = to_networkx(network, validate=False)
     data = to_pyg(network, validate=False)
     dims = feature_dims()
@@ -62,12 +71,12 @@ def graph_tensors(network: dict) -> tuple:
 def ingest_events(network: dict, *, parse_limit: int | None = None) -> list[dict]:
     """Scrape articles, LLM-extract shocks, map to node_ids, persist + inject."""
     from backend.database import upsert_events
+    from backend.ingestion.entity_resolver import build_gazetteer
     from backend.ingestion.parser_llm import (
         EventParser,
         filter_events,
         inject_events_into_network,
     )
-    from backend.ingestion.entity_resolver import build_gazetteer
     from backend.ingestion.scrapers import save_articles, scrape_all
 
     articles = scrape_all(
@@ -103,18 +112,6 @@ def ingest_events(network: dict, *, parse_limit: int | None = None) -> list[dict
         injected,
     )
     return [e.to_dict() for e in events]
-
-
-def run_inference(_network: dict, _events: list[dict]) -> dict[str, float]:
-    """Phase 3 stub — GNN tension scores by commodity."""
-    logger.info("GNN inference not implemented yet (Phase 3)")
-    return {}
-
-
-def make_signal(_tensions: dict[str, float]) -> dict | None:
-    """Phase 4 stub — tension → trade signal."""
-    logger.info("Strategy / signal not implemented yet (Phase 4)")
-    return None
 
 
 def ingest_events_from_db(
@@ -180,6 +177,60 @@ def inject_persisted_events(network: dict, *, limit: int = 1000) -> list[dict]:
     return rows
 
 
+def run_inference(
+    network: dict,
+    _events: list[dict] | None = None,
+    *,
+    backend: str | None = None,
+) -> dict:
+    """Run diffusion or GAT; return commodity + node tensions."""
+    backend = (backend or config.INFERENCE_BACKEND).lower()
+    ckpt = config.GNN_CHECKPOINT_DIR / "shock_gat.pt"
+
+    if backend == "auto":
+        backend = "gat" if ckpt.exists() else "diffusion"
+
+    if backend == "gat":
+        from backend.models.gat import load_checkpoint, run_gat
+
+        model = load_checkpoint()
+        result = run_gat(network, model=model)
+        logger.info("GAT commodity tensions: %s", result["commodity_tensions"])
+        return {
+            "backend": "gat",
+            "commodity_tensions": result["commodity_tensions"],
+            "node_tensions": result["node_tensions"],
+        }
+
+    from backend.models.baseline_diffusion import run_diffusion
+
+    result = run_diffusion(network)
+    logger.info("Diffusion commodity tensions: %s", result["commodity_tensions"])
+    return {
+        "backend": "diffusion",
+        "commodity_tensions": result["commodity_tensions"],
+        "node_tensions": result["node_tensions"],
+    }
+
+
+def make_signal(tensions: dict[str, float]) -> dict | None:
+    """Tension → trade signal for default commodity."""
+    from backend.quant.strategy import primary_signal
+
+    signal = primary_signal(tensions)
+    if signal:
+        logger.info(
+            "Signal %s side=%s tension=%.3f ticker=%s",
+            signal["commodity"],
+            signal["side"],
+            signal["tension"],
+            signal.get("ticker"),
+        )
+    else:
+        logger.info("No signal (empty tensions)")
+    return signal
+
+
 def run(
     sector: str | None = None,
     *,
@@ -187,12 +238,12 @@ def run(
     skip_llm: bool = False,
     from_db: bool = False,
     parse_limit: int | None = None,
+    inference_backend: str | None = None,
 ) -> dict:
     config.ensure_dirs()
     sector = sector or config.DEFAULT_SECTOR
 
     network = build_graph(sector)
-    _nx_graph, _pyg_data = graph_tensors(network)
 
     if skip_ingest and not from_db:
         events = inject_persisted_events(network)
@@ -211,8 +262,26 @@ def run(
     else:
         events = ingest_events(network, parse_limit=parse_limit)
 
-    tensions = run_inference(network, events)
+    # Rebuild tensors AFTER inject so event_severity lands in PyG features
+    nx_graph, pyg_data = graph_tensors(network)
+
+    inference = run_inference(network, events, backend=inference_backend)
+    tensions = inference["commodity_tensions"]
     signal = make_signal(tensions)
+
+    from backend.dashboard_state import write_dashboard_state
+    from backend.quant.strategy import make_signals
+
+    write_dashboard_state(
+        sector=sector,
+        network=network,
+        commodity_tensions=tensions,
+        node_tensions=inference.get("node_tensions") or {},
+        signal=signal,
+        signals=make_signals(tensions),
+        inference_backend=inference.get("backend") or "diffusion",
+        events=events,
+    )
 
     return {
         "sector": sector,
@@ -225,6 +294,9 @@ def run(
         "n_events": len(events),
         "tensions": tensions,
         "signal": signal,
+        "nx_nodes": nx_graph.number_of_nodes(),
+        "pyg_x": tuple(pyg_data.x.shape),
+        "inference_backend": inference.get("backend"),
     }
 
 
@@ -238,7 +310,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--skip-ingest",
         action="store_true",
-        help="Skip RSS/GDELT scraping and LLM parsing",
+        help="Skip RSS/GDELT scraping and LLM parsing; inject persisted events",
     )
     parser.add_argument(
         "--skip-llm",
@@ -257,16 +329,19 @@ def main(argv: list[str] | None = None) -> None:
         help="Max articles to send to the LLM (default: GCP_LLM_PARSE_LIMIT)",
     )
     parser.add_argument(
+        "--inference",
+        choices=("auto", "diffusion", "gat"),
+        default=None,
+        help="Tension backend (default: GCP_INFERENCE_BACKEND)",
+    )
+    parser.add_argument(
         "--log-level",
         default=config.LOG_LEVEL,
         help="Logging level (DEBUG, INFO, ...)",
     )
     args = parser.parse_args(argv)
 
-    logging.basicConfig(
-        level=getattr(logging, args.log_level.upper(), logging.INFO),
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    )
+    configure_logging(args.log_level)
 
     result = run(
         sector=args.sector,
@@ -274,11 +349,13 @@ def main(argv: list[str] | None = None) -> None:
         skip_llm=args.skip_llm,
         from_db=args.from_db,
         parse_limit=args.parse_limit,
+        inference_backend=args.inference,
     )
     print(
         f"[{result['sector']}] nodes={result['n_nodes']} edges={result['n_edges']} "
         f"commodities={result['commodities']} events={result['n_events']} "
-        f"ticker={result['ticker']}"
+        f"ticker={result['ticker']} tensions={result['tensions']} "
+        f"signal={result['signal']}"
     )
 
 

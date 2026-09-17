@@ -830,3 +830,103 @@ def apply_policies_to_network(
                 node["policy_title"] = pol["title"]
             touched += 1
     return touched
+
+
+# ---------------------------------------------------------------------------
+# Graph mirror (YAML topology snapshot in SQLite)
+# ---------------------------------------------------------------------------
+
+
+def sync_graph_mirror(
+    network: dict,
+    conn: sqlite3.Connection | None = None,
+) -> UpsertResult:
+    """Replace graph_nodes / graph_edges rows for this sector with current network."""
+    import json
+    from datetime import datetime, timezone
+
+    owns = conn is None
+    conn = conn or connect()
+    init_db(conn)
+
+    sector = str(network.get("sector") or "unknown")
+    synced_at = datetime.now(timezone.utc).isoformat()
+    core_node = {"id", "commodity", "type", "country", "lat", "lon", "capacity_kt"}
+    core_edge = {"source", "target", "flow_type", "product_form", "weight", "transit_days"}
+
+    conn.execute("DELETE FROM graph_nodes WHERE sector = ?", (sector,))
+    conn.execute("DELETE FROM graph_edges WHERE sector = ?", (sector,))
+
+    inserted = 0
+    for node in network.get("nodes") or []:
+        attrs = {k: v for k, v in node.items() if k not in core_node}
+        # JSON-serialize non-primitive values
+        safe_attrs = {}
+        for k, v in attrs.items():
+            try:
+                json.dumps(v)
+                safe_attrs[k] = v
+            except TypeError:
+                safe_attrs[k] = str(v)
+        conn.execute(
+            """
+            INSERT INTO graph_nodes (
+                node_id, sector, commodity, type, country, lat, lon,
+                capacity_kt, attrs_json, synced_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                node["id"],
+                sector,
+                node.get("commodity") or "",
+                node.get("type") or "",
+                node.get("country") or "",
+                node.get("lat"),
+                node.get("lon"),
+                node.get("capacity_kt"),
+                json.dumps(safe_attrs),
+                synced_at,
+            ),
+        )
+        inserted += 1
+
+    for edge in network.get("edges") or []:
+        attrs = {k: v for k, v in edge.items() if k not in core_edge}
+        safe_attrs = {}
+        for k, v in attrs.items():
+            try:
+                json.dumps(v)
+                safe_attrs[k] = v
+            except TypeError:
+                safe_attrs[k] = str(v)
+        conn.execute(
+            """
+            INSERT OR REPLACE INTO graph_edges (
+                sector, source, target, flow_type, product_form,
+                weight, transit_days, attrs_json, synced_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                sector,
+                edge["source"],
+                edge["target"],
+                edge.get("flow_type") or "",
+                edge.get("product_form") or "",
+                edge.get("weight"),
+                edge.get("transit_days"),
+                json.dumps(safe_attrs),
+                synced_at,
+            ),
+        )
+        inserted += 1
+
+    conn.commit()
+    total_n = conn.execute(
+        "SELECT COUNT(*) FROM graph_nodes WHERE sector = ?", (sector,)
+    ).fetchone()[0]
+    total_e = conn.execute(
+        "SELECT COUNT(*) FROM graph_edges WHERE sector = ?", (sector,)
+    ).fetchone()[0]
+    if owns:
+        conn.close()
+    return UpsertResult(inserted=inserted, updated=0, total=total_n + total_e)

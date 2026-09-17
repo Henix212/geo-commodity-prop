@@ -113,6 +113,40 @@ CREATE TABLE IF NOT EXISTS policies (
 CREATE INDEX IF NOT EXISTS idx_policies_jurisdiction ON policies(jurisdiction);
 CREATE INDEX IF NOT EXISTS idx_policies_commodity ON policies(commodity);
 CREATE INDEX IF NOT EXISTS idx_policies_effective ON policies(effective_from);
+
+CREATE TABLE IF NOT EXISTS graph_nodes (
+    node_id TEXT NOT NULL,
+    sector TEXT NOT NULL,
+    commodity TEXT NOT NULL DEFAULT '',
+    type TEXT NOT NULL DEFAULT '',
+    country TEXT NOT NULL DEFAULT '',
+    lat REAL,
+    lon REAL,
+    capacity_kt REAL,
+    attrs_json TEXT NOT NULL DEFAULT '{}',
+    synced_at TEXT NOT NULL,
+    PRIMARY KEY (sector, node_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_graph_nodes_type ON graph_nodes(type);
+CREATE INDEX IF NOT EXISTS idx_graph_nodes_commodity ON graph_nodes(commodity);
+
+CREATE TABLE IF NOT EXISTS graph_edges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sector TEXT NOT NULL,
+    source TEXT NOT NULL,
+    target TEXT NOT NULL,
+    flow_type TEXT NOT NULL DEFAULT '',
+    product_form TEXT NOT NULL DEFAULT '',
+    weight REAL,
+    transit_days REAL,
+    attrs_json TEXT NOT NULL DEFAULT '{}',
+    synced_at TEXT NOT NULL,
+    UNIQUE(sector, source, target, flow_type, product_form)
+);
+
+CREATE INDEX IF NOT EXISTS idx_graph_edges_sector ON graph_edges(sector);
+CREATE INDEX IF NOT EXISTS idx_graph_edges_endpoints ON graph_edges(source, target);
 """
 
 

@@ -12,6 +12,7 @@ from backend.database.models import (
     list_prices,
     list_production,
     list_tc_rc,
+    sync_graph_mirror,
     upsert_articles,
     upsert_events,
     upsert_policies,
@@ -40,4 +41,5 @@ __all__ = [
     "upsert_policies",
     "list_policies",
     "apply_policies_to_network",
+    "sync_graph_mirror",
 ]
