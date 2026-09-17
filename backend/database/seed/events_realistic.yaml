@@ -1,0 +1,202 @@
+# Realistic multi-node shock events for large-scale dashboard / e2e tests.
+# Upserted into SQLite `events` then injected with decay.
+source: "synthetic stress pack — illustrative"
+rows:
+  - article_uid: "scale:escondida_strike"
+    entity_text: "Escondida"
+    node_id: mine_escondida
+    event_type: strike
+    severity: 0.88
+    commodity: copper
+    direction: supply_down
+    confidence: 0.9
+    match_score: 1.0
+
+  - article_uid: "scale:collahuasi_weather"
+    entity_text: "Collahuasi"
+    node_id: mine_collahuasi
+    event_type: weather
+    severity: 0.55
+    commodity: copper
+    direction: supply_down
+    confidence: 0.75
+
+  - article_uid: "scale:las_bambas_blockade"
+    entity_text: "Las Bambas"
+    node_id: mine_las_bambas
+    event_type: blockade
+    severity: 0.72
+    commodity: copper
+    direction: transit_block
+    confidence: 0.85
+
+  - article_uid: "scale:grasberg_policy"
+    entity_text: "Grasberg"
+    node_id: mine_grasberg
+    event_type: policy
+    severity: 0.65
+    commodity: copper
+    direction: supply_down
+    confidence: 0.8
+
+  - article_uid: "scale:kamoa_outage"
+    entity_text: "Kamoa-Kakula"
+    node_id: mine_kamoa_kakula
+    event_type: outage
+    severity: 0.6
+    commodity: copper
+    direction: supply_down
+    confidence: 0.78
+
+  - article_uid: "scale:panama_congestion"
+    entity_text: "Panama Canal"
+    node_id: chokepoint_panama
+    event_type: congestion
+    severity: 0.8
+    commodity: copper
+    direction: transit_block
+    confidence: 0.9
+
+  - article_uid: "scale:malacca_delay"
+    entity_text: "Malacca Strait"
+    node_id: chokepoint_malacca
+    event_type: congestion
+    severity: 0.45
+    commodity: copper
+    direction: transit_block
+    confidence: 0.7
+
+  - article_uid: "scale:qingdao_port"
+    entity_text: "Qingdao"
+    node_id: port_qingdao
+    event_type: congestion
+    severity: 0.5
+    commodity: copper
+    direction: demand_down
+    confidence: 0.7
+
+  - article_uid: "scale:jiangxi_smelter"
+    entity_text: "Jiangxi Copper"
+    node_id: smelter_jiangxi
+    event_type: outage
+    severity: 0.58
+    commodity: copper
+    direction: supply_down
+    confidence: 0.75
+
+  - article_uid: "scale:aurubis_accident"
+    entity_text: "Aurubis Hamburg"
+    node_id: smelter_aurubis_hamburg
+    event_type: accident
+    severity: 0.4
+    commodity: copper
+    direction: supply_down
+    confidence: 0.7
+
+  - article_uid: "scale:hormuz_blockade"
+    entity_text: "Strait of Hormuz"
+    node_id: chokepoint_hormuz
+    event_type: blockade
+    severity: 0.92
+    commodity: oil
+    direction: transit_block
+    confidence: 0.95
+
+  - article_uid: "scale:suez_closure"
+    entity_text: "Suez Canal"
+    node_id: chokepoint_suez
+    event_type: blockade
+    severity: 0.85
+    commodity: oil
+    direction: transit_block
+    confidence: 0.9
+
+  - article_uid: "scale:lng_gorgon"
+    entity_text: "Gorgon LNG"
+    node_id: lng_gorgon
+    event_type: outage
+    severity: 0.55
+    commodity: lng
+    direction: supply_down
+    confidence: 0.72
+
+  - article_uid: "scale:gold_lbma"
+    entity_text: "LBMA"
+    node_id: vault_lbma_au
+    event_type: other
+    severity: 0.35
+    commodity: gold
+    direction: demand_up
+    confidence: 0.6
+
+  - article_uid: "scale:aluminum_shandong"
+    entity_text: "Shandong aluminum"
+    node_id: smelter_china_shandong
+    event_type: policy
+    severity: 0.5
+    commodity: aluminum
+    direction: supply_down
+    confidence: 0.7
+
+  - article_uid: "scale:antofagasta_port"
+    entity_text: "Antofagasta"
+    node_id: port_antofagasta
+    event_type: strike
+    severity: 0.7
+    commodity: copper
+    direction: transit_block
+    confidence: 0.85
+
+  - article_uid: "scale:morenci_weather"
+    entity_text: "Morenci"
+    node_id: mine_morenci
+    event_type: weather
+    severity: 0.42
+    commodity: copper
+    direction: supply_down
+    confidence: 0.68
+
+  - article_uid: "scale:freeport_pas"
+    entity_text: "Miami PAS"
+    node_id: smelter_glencore_pas
+    event_type: force_majeure
+    severity: 0.48
+    commodity: copper
+    direction: supply_down
+    confidence: 0.72
+
+  - article_uid: "scale:bosphorus"
+    entity_text: "Bosphorus"
+    node_id: chokepoint_bosphorus
+    event_type: congestion
+    severity: 0.4
+    commodity: wheat
+    direction: transit_block
+    confidence: 0.65
+
+  - article_uid: "scale:wheat_black_sea"
+    entity_text: "Black Sea wheat"
+    node_id: region_black_sea_wheat
+    event_type: sanction
+    severity: 0.75
+    commodity: wheat
+    direction: supply_down
+    confidence: 0.8
+
+  - article_uid: "scale:permian_weather"
+    entity_text: "Permian"
+    node_id: field_permian
+    event_type: weather
+    severity: 0.45
+    commodity: oil
+    direction: supply_down
+    confidence: 0.7
+
+  - article_uid: "scale:ras_laffan"
+    entity_text: "Ras Laffan"
+    node_id: lng_ras_laffan
+    event_type: outage
+    severity: 0.7
+    commodity: lng
+    direction: supply_down
+    confidence: 0.85

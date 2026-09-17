@@ -12,6 +12,7 @@ import yaml
 from backend import config
 from backend.database import (
     init_db,
+    upsert_events,
     upsert_policies,
     upsert_production,
     upsert_tc_rc,
@@ -84,21 +85,57 @@ def seed_policies(path: Path | None = None) -> dict[str, int]:
     return {"inserted": result.inserted, "updated": result.updated, "total": result.total}
 
 
-def seed_all() -> dict[str, dict[str, int]]:
+def seed_events(path: Path | None = None) -> dict[str, int]:
+    """Upsert realistic multi-shock events (for scale tests / rich event feed)."""
+    from datetime import datetime, timezone
+
+    path = path or (config.SEED_DIR / "events_realistic.yaml")
+    data = _load_yaml(path)
+    now = datetime.now(timezone.utc).isoformat()
+    rows = []
+    for row in data.get("rows") or []:
+        rows.append(
+            {
+                "article_uid": row.get("article_uid") or "",
+                "entity_text": row["entity_text"],
+                "node_id": row.get("node_id"),
+                "event_type": row["event_type"],
+                "severity": float(row["severity"]),
+                "commodity": row["commodity"],
+                "direction": row["direction"],
+                "confidence": float(row.get("confidence") or 0.7),
+                "match_score": float(row.get("match_score") or 1.0),
+                "extracted_at": row.get("extracted_at") or now,
+            }
+        )
+    result = upsert_events(rows)
+    logger.info("events seed %s → +%d ~%d total=%d", path.name, result.inserted, result.updated, result.total)
+    return {"inserted": result.inserted, "updated": result.updated, "total": result.total}
+
+
+def seed_all(*, include_events: bool = False) -> dict[str, dict[str, int]]:
     init_db()
-    return {
+    out = {
         "production": seed_production(),
         "tc_rc": seed_tc_rc(),
         "policies": seed_policies(),
     }
+    if include_events:
+        out["events"] = seed_events()
+    return out
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Seed production / TC-RC / policies into SQLite")
     parser.add_argument(
         "--only",
-        choices=("production", "tc_rc", "policies", "all"),
+        choices=("production", "tc_rc", "policies", "events", "all"),
         default="all",
+    )
+    parser.add_argument(
+        "--with-events",
+        action="store_true",
+        help="Also seed realistic multi-shock events (with --only all)",
     )
     parser.add_argument("--log-level", default=config.LOG_LEVEL)
     args = parser.parse_args(argv)
@@ -108,11 +145,13 @@ def main(argv: list[str] | None = None) -> None:
     )
     init_db()
     if args.only == "all":
-        out = seed_all()
+        out = seed_all(include_events=args.with_events)
     elif args.only == "production":
         out = {"production": seed_production()}
     elif args.only == "tc_rc":
         out = {"tc_rc": seed_tc_rc()}
+    elif args.only == "events":
+        out = {"events": seed_events()}
     else:
         out = {"policies": seed_policies()}
     print(out)
