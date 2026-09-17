@@ -16,6 +16,7 @@ dependencies = [
     "pyyaml",
     "huggingface-hub>=1.31.0",
     "matplotlib>=3.10.9",
+    "accelerate>=1.15.0",
 ]
 
 [build-system]
