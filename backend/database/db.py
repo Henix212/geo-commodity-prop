@@ -113,6 +113,44 @@ CREATE TABLE IF NOT EXISTS policies (
 CREATE INDEX IF NOT EXISTS idx_policies_jurisdiction ON policies(jurisdiction);
 CREATE INDEX IF NOT EXISTS idx_policies_commodity ON policies(commodity);
 CREATE INDEX IF NOT EXISTS idx_policies_effective ON policies(effective_from);
+
+CREATE TABLE IF NOT EXISTS node_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    network_name TEXT NOT NULL,
+    sector TEXT NOT NULL DEFAULT '',
+    node_id TEXT NOT NULL,
+    node_type TEXT NOT NULL DEFAULT '',
+    commodity TEXT NOT NULL DEFAULT '',
+    capacity REAL,
+    stock REAL,
+    lat REAL,
+    lon REAL,
+    event_severity REAL NOT NULL DEFAULT 0,
+    attrs_json TEXT NOT NULL DEFAULT '',
+    synced_at TEXT NOT NULL,
+    UNIQUE(network_name, node_id, synced_at)
+);
+
+CREATE INDEX IF NOT EXISTS idx_node_snap_network ON node_snapshots(network_name, synced_at);
+CREATE INDEX IF NOT EXISTS idx_node_snap_node ON node_snapshots(node_id);
+
+CREATE TABLE IF NOT EXISTS edges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    network_name TEXT NOT NULL,
+    sector TEXT NOT NULL DEFAULT '',
+    source TEXT NOT NULL,
+    target TEXT NOT NULL,
+    flow_type TEXT NOT NULL DEFAULT '',
+    product_form TEXT NOT NULL DEFAULT '',
+    weight REAL NOT NULL DEFAULT 1.0,
+    transit_days REAL,
+    attrs_json TEXT NOT NULL DEFAULT '',
+    synced_at TEXT NOT NULL,
+    UNIQUE(network_name, source, target, flow_type, product_form, synced_at)
+);
+
+CREATE INDEX IF NOT EXISTS idx_edges_network ON edges(network_name, synced_at);
+CREATE INDEX IF NOT EXISTS idx_edges_endpoints ON edges(source, target);
 """
 
 

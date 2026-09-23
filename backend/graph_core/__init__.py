@@ -21,4 +21,14 @@ __all__ = [
     "to_networkx",
     "to_pyg",
     "feature_dims",
+    "tension_from_network",
+    "betweenness_spof",
 ]
+
+
+def __getattr__(name: str):
+    if name in {"tension_from_network", "betweenness_spof", "diffuse_severity"}:
+        from backend.graph_core import analytics
+
+        return getattr(analytics, name)
+    raise AttributeError(name)

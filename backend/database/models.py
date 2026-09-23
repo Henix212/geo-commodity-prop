@@ -830,3 +830,160 @@ def apply_policies_to_network(
                 node["policy_title"] = pol["title"]
             touched += 1
     return touched
+
+
+def sync_graph_to_db(
+    network: dict,
+    *,
+    conn: sqlite3.Connection | None = None,
+) -> dict[str, Any]:
+    """Persist full graph mirror (nodes + edges) with a shared synced_at stamp."""
+    import json
+    from datetime import datetime, timezone
+
+    owns = conn is None
+    conn = conn or connect()
+    init_db(conn)
+
+    synced_at = datetime.now(timezone.utc).isoformat()
+    network_name = str(network.get("network_name") or "unknown")
+    sector = str(network.get("sector") or "")
+    n_nodes = 0
+    n_edges = 0
+
+    for node in network.get("nodes") or []:
+        nid = node.get("id")
+        if not nid:
+            continue
+        attrs = {k: v for k, v in node.items() if k != "id"}
+        conn.execute(
+            """
+            INSERT INTO node_snapshots (
+                network_name, sector, node_id, node_type, commodity,
+                capacity, stock, lat, lon, event_severity, attrs_json, synced_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                network_name,
+                sector,
+                nid,
+                str(node.get("type") or ""),
+                str(node.get("commodity") or node.get("event_commodity") or ""),
+                _opt_float(node.get("capacity_kt") or node.get("capacity_kbd")),
+                _opt_float(node.get("stock_level_kt") or node.get("stock_level_kbbl")),
+                _opt_float(node.get("lat")),
+                _opt_float(node.get("lon")),
+                float(node.get("event_severity") or 0.0),
+                json.dumps(attrs, default=str),
+                synced_at,
+            ),
+        )
+        n_nodes += 1
+
+    for edge in network.get("edges") or []:
+        src, tgt = edge.get("source"), edge.get("target")
+        if not src or not tgt:
+            continue
+        attrs = {k: v for k, v in edge.items() if k not in ("source", "target")}
+        conn.execute(
+            """
+            INSERT INTO edges (
+                network_name, sector, source, target, flow_type, product_form,
+                weight, transit_days, attrs_json, synced_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                network_name,
+                sector,
+                src,
+                tgt,
+                str(edge.get("flow_type") or ""),
+                str(edge.get("product_form") or ""),
+                float(edge.get("weight") or 1.0),
+                _opt_float(edge.get("transit_days")),
+                json.dumps(attrs, default=str),
+                synced_at,
+            ),
+        )
+        n_edges += 1
+
+    conn.commit()
+    if owns:
+        conn.close()
+    return {"nodes": n_nodes, "edges": n_edges, "synced_at": synced_at}
+
+def _opt_float(value: Any) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def list_node_snapshots(
+    *,
+    network_name: str | None = None,
+    limit: int = 5000,
+    conn: sqlite3.Connection | None = None,
+) -> list[dict]:
+    owns = conn is None
+    conn = conn or connect()
+    init_db(conn)
+    if network_name:
+        rows = conn.execute(
+            """
+            SELECT * FROM node_snapshots
+            WHERE network_name = ?
+            ORDER BY synced_at DESC, node_id
+            LIMIT ?
+            """,
+            (network_name, limit),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """
+            SELECT * FROM node_snapshots
+            ORDER BY synced_at DESC, node_id
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+    result = [dict(r) for r in rows]
+    if owns:
+        conn.close()
+    return result
+
+
+def list_graph_edges(
+    *,
+    network_name: str | None = None,
+    limit: int = 10000,
+    conn: sqlite3.Connection | None = None,
+) -> list[dict]:
+    owns = conn is None
+    conn = conn or connect()
+    init_db(conn)
+    if network_name:
+        rows = conn.execute(
+            """
+            SELECT * FROM edges
+            WHERE network_name = ?
+            ORDER BY synced_at DESC, source, target
+            LIMIT ?
+            """,
+            (network_name, limit),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """
+            SELECT * FROM edges
+            ORDER BY synced_at DESC, source, target
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+    result = [dict(r) for r in rows]
+    if owns:
+        conn.close()
+    return result

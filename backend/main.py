@@ -1,4 +1,4 @@
-"""Entry point: build graph → events → (inference) → (signal)."""
+"""Entry point: build graph → events → inference → signal."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import logging
 
 from backend import config
 from backend.graph_core import feature_dims, load_sector, to_networkx, to_pyg, validate_network
+from backend.logging_setup import setup_logging
 
 
 logger = logging.getLogger(__name__)
@@ -105,16 +106,30 @@ def ingest_events(network: dict, *, parse_limit: int | None = None) -> list[dict
     return [e.to_dict() for e in events]
 
 
-def run_inference(_network: dict, _events: list[dict]) -> dict[str, float]:
-    """Phase 3 stub — GNN tension scores by commodity."""
-    logger.info("GNN inference not implemented yet (Phase 3)")
-    return {}
+def run_inference(
+    network: dict,
+    _events: list[dict],
+    *,
+    use_gat: bool | None = None,
+    baseline: bool = False,
+) -> dict[str, float]:
+    """GNN or NetworkX diffusion → tension scores by commodity."""
+    from backend.models.infer import infer_tensions
+
+    if baseline:
+        use_gat = False
+    tensions = infer_tensions(network, use_gat=use_gat)
+    logger.info("tensions=%s (baseline=%s use_gat=%s)", tensions, baseline, use_gat)
+    return tensions
 
 
-def make_signal(_tensions: dict[str, float]) -> dict | None:
-    """Phase 4 stub — tension → trade signal."""
-    logger.info("Strategy / signal not implemented yet (Phase 4)")
-    return None
+def make_signal(tensions: dict[str, float]) -> dict | None:
+    """Tension → trade signal."""
+    from backend.quant.strategy import tension_to_signal
+
+    signal = tension_to_signal(tensions)
+    logger.info("signal=%s", signal)
+    return signal
 
 
 def ingest_events_from_db(
@@ -187,6 +202,10 @@ def run(
     skip_llm: bool = False,
     from_db: bool = False,
     parse_limit: int | None = None,
+    demo_event: bool = False,
+    use_gat: bool | None = None,
+    baseline: bool = False,
+    sync_graph: bool = False,
 ) -> dict:
     config.ensure_dirs()
     sector = sector or config.DEFAULT_SECTOR
@@ -194,7 +213,12 @@ def run(
     network = build_graph(sector)
     _nx_graph, _pyg_data = graph_tensors(network)
 
-    if skip_ingest and not from_db:
+    if demo_event:
+        from backend.ingestion.inject_demo import inject_demo
+
+        network, event, _ = inject_demo(sector=sector, network=network, persist=True)
+        events = [event.to_dict()]
+    elif skip_ingest and not from_db:
         events = inject_persisted_events(network)
     elif from_db:
         events = ingest_events_from_db(network, parse_limit=parse_limit)
@@ -211,7 +235,13 @@ def run(
     else:
         events = ingest_events(network, parse_limit=parse_limit)
 
-    tensions = run_inference(network, events)
+    if sync_graph:
+        from backend.database import sync_graph_to_db
+
+        mirror = sync_graph_to_db(network)
+        logger.info("graph mirror synced %s", mirror)
+
+    tensions = run_inference(network, events, use_gat=use_gat, baseline=baseline)
     signal = make_signal(tensions)
 
     return {
@@ -251,6 +281,26 @@ def main(argv: list[str] | None = None) -> None:
         help="Parse articles already in SQLite (skip scrape; recommended for LLM)",
     )
     parser.add_argument(
+        "--demo-event",
+        action="store_true",
+        help="Inject synthetic Escondida-style shock (no LLM)",
+    )
+    parser.add_argument(
+        "--use-gat",
+        action="store_true",
+        help="Force GAT inference (requires checkpoint)",
+    )
+    parser.add_argument(
+        "--baseline",
+        action="store_true",
+        help="Force NetworkX diffusion baseline (ignore GAT checkpoint)",
+    )
+    parser.add_argument(
+        "--sync-graph",
+        action="store_true",
+        help="Mirror nodes/edges into SQLite",
+    )
+    parser.add_argument(
         "--parse-limit",
         type=int,
         default=None,
@@ -263,22 +313,24 @@ def main(argv: list[str] | None = None) -> None:
     )
     args = parser.parse_args(argv)
 
-    logging.basicConfig(
-        level=getattr(logging, args.log_level.upper(), logging.INFO),
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    )
+    setup_logging(args.log_level)
 
+    use_gat: bool | None = True if args.use_gat else (False if args.baseline else None)
     result = run(
         sector=args.sector,
         skip_ingest=args.skip_ingest,
         skip_llm=args.skip_llm,
         from_db=args.from_db,
         parse_limit=args.parse_limit,
+        demo_event=args.demo_event,
+        use_gat=use_gat,
+        baseline=args.baseline,
+        sync_graph=args.sync_graph,
     )
     print(
         f"[{result['sector']}] nodes={result['n_nodes']} edges={result['n_edges']} "
         f"commodities={result['commodities']} events={result['n_events']} "
-        f"ticker={result['ticker']}"
+        f"ticker={result['ticker']} tensions={result['tensions']} signal={result['signal']}"
     )
 
 

@@ -182,6 +182,48 @@ def refresh_all_metals(
     return out
 
 
+CORE_FUTURES = ("copper", "oil", "gold", "silver")  # HG=F, CL=F, GC=F, SI=F
+
+
+def refresh_core_futures(
+    *,
+    start: str | None = None,
+    end: str | None = None,
+    period: str | None = "2y",
+) -> list[dict[str, Any]]:
+    """Refresh HG=F / CL=F / GC=F / SI=F proxies."""
+    out = []
+    for commodity in CORE_FUTURES:
+        out.append(
+            refresh_prices(
+                commodity,
+                start=start,
+                end=end,
+                period=period if not start else None,
+            )
+        )
+    return out
+
+
+def refresh_all_commodities(
+    *,
+    start: str | None = None,
+    end: str | None = None,
+    period: str | None = "2y",
+) -> list[dict[str, Any]]:
+    out = []
+    for commodity in config.TICKERS:
+        out.append(
+            refresh_prices(
+                commodity,
+                start=start,
+                end=end,
+                period=period if not start else None,
+            )
+        )
+    return out
+
+
 def load_price_frame(
     commodity: str,
     *,
@@ -212,7 +254,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--commodity",
         default="copper",
-        help="Commodity key (copper, aluminum, gold, silver, …) or 'metals'",
+        help="Commodity key, or 'metals' | 'core' (HG/CL/GC/SI) | 'all'",
     )
     parser.add_argument("--venue", default=None, help="COMEX | LME | SHFE (optional)")
     parser.add_argument("--start", default=None)
@@ -228,6 +270,18 @@ def main(argv: list[str] | None = None) -> None:
 
     if args.commodity == "metals":
         summary = refresh_all_metals(start=args.start, end=args.end, period=args.period)
+        print(summary)
+        return
+    if args.commodity == "core":
+        summary = refresh_core_futures(
+            start=args.start, end=args.end, period=args.period
+        )
+        print(summary)
+        return
+    if args.commodity == "all":
+        summary = refresh_all_commodities(
+            start=args.start, end=args.end, period=args.period
+        )
         print(summary)
         return
 

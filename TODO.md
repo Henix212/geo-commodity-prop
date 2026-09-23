@@ -53,7 +53,7 @@ Files: `backend/graph_core/` + `network_data/`
 - [x] TC/RC by route → `database/`
 - [x] LME / SHFE / COMEX price time series → `quant/market_data.py`
 - [x] Trade-policy constraints (Indonesia ore rules, Chile taxes, …) → dated table / config
-- [ ] Periodic jobs: refresh prices, refresh production
+- [x] Periodic jobs: refresh prices, refresh production
 
 ---
 
@@ -79,12 +79,12 @@ Files: `backend/ingestion/`
 
 Files: `backend/models/` + training
 
-- [ ] Baseline: NetworkX diffusion / random walk (sanity check without deep learning)
-- [ ] GAT architecture (Graph Attention) — PyG
-- [ ] Input: graph + event features → output: tension score per commodity / node
-- [ ] Labels: historical post-shock price reactions (supervised / semi-supervised)
-- [ ] Training, checkpoints, eval (tension MAE, price directionality)
-- [ ] Ablations: with/without scrap, with/without chokepoints
+- [x] Baseline: NetworkX diffusion / random walk (sanity check without deep learning)
+- [x] GAT architecture (Graph Attention) — PyG
+- [x] Input: graph + event features → output: tension score per commodity / node
+- [x] Labels: historical post-shock price reactions (supervised / semi-supervised)
+- [x] Training, checkpoints, eval (tension MAE, price directionality)
+- [x] Ablations: with/without scrap, with/without chokepoints
 
 ---
 
@@ -95,10 +95,10 @@ Files: `backend/models/` + training
 Files: `backend/quant/`
 
 - [x] `market_data.py` — fetch & cache prices (yfinance / futures APIs)
-- [ ] `strategy.py` — GNN tension → long/short signal
-- [ ] VectorBT backtest (sharpe, drawdown, turnover)
-- [ ] Stress scenarios: Escondida outage, Panama blockade, Suez closure
-- [ ] Centrality analysis (betweenness) → single points of failure
+- [x] `strategy.py` — GNN tension → long/short signal
+- [x] VectorBT backtest (sharpe, drawdown, turnover)
+- [x] Stress scenarios: Escondida outage, Panama blockade, Suez closure
+- [x] Centrality analysis (betweenness) → single points of failure
 
 ---
 
@@ -112,18 +112,31 @@ Files: `backend/database/`
 - [x] `models.py` — article upsert/list (scraper history preserved by uid)
 - [x] `models.py` — shock events upsert/list
 - [x] `models.py` — production, TC/RC, prices, policies (+ seed YAML)
-- [ ] `models.py` — node snapshots, edges (full graph mirror)
-- [ ] Periodic jobs: refresh prices, refresh production
-- [ ] Basic logging / monitoring
+- [x] `models.py` — node snapshots, edges (full graph mirror)
+- [x] Periodic jobs: refresh prices, refresh production
+- [x] Basic logging / monitoring
 
 ---
 
 
 
-## Suggested next steps
+## Smoke commands (suggested steps — done)
 
-1. RSS scraper + LLM parser → inject one event onto a node (Phase 2)
-2. NetworkX diffusion / centrality baseline on copper & oil
-3. `market_data.py` — HG=F, CL=F, GC=F, SI=F series
-4. Minimal GAT → tension score → VectorBT smoke backtest
+```bash
+# 1. Synthetic event inject (no LLM)
+uv run python -m backend.ingestion.inject_demo --node mine_escondida --commodity copper
+uv run python -m backend.main --demo-event --baseline --skip-ingest --sync-graph
 
+# 2. Diffusion / centrality on copper & oil sectors
+uv run python -m backend.graph_core.analytics --sector metals --top-k 10
+uv run python -m backend.graph_core.analytics --sector energy --top-k 10
+
+# 3. Core futures HG=F CL=F GC=F SI=F
+uv run python -m backend.quant.market_data --commodity core
+
+# 4. Minimal GAT → tension → VectorBT
+uv run python -m backend.models.train --sector metals --epochs 5 --n-synthetic 24
+uv run python -m backend.main --demo-event --use-gat --skip-ingest
+uv run python -m backend.quant.backtest --commodity copper --refresh
+uv run python -m backend.quant.scenarios --scenario escondida_outage
+```

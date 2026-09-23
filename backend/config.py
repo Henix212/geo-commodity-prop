@@ -13,7 +13,9 @@ BACKEND_DIR = Path(__file__).resolve().parent
 
 NETWORK_DATA_DIR = BACKEND_DIR / "graph_core" / "network_data"
 MODELS_DIR = BACKEND_DIR / "models"
+GNN_DIR = Path(os.getenv("GCP_GNN_DIR", MODELS_DIR / "gnn"))
 DATA_DIR = Path(os.getenv("GCP_DATA_DIR", ROOT_DIR / "data"))
+LOG_DIR = Path(os.getenv("GCP_LOG_DIR", DATA_DIR / "logs"))
 DB_PATH = Path(os.getenv("GCP_DB_PATH", DATA_DIR / "geo_commodity.db"))
 
 # ---------------------------------------------------------------------------
@@ -77,6 +79,16 @@ EVENT_CONFIDENCE_MIN = float(os.getenv("GCP_EVENT_CONFIDENCE_MIN", "0.4"))
 EVENT_DECAY_HALF_LIFE_HOURS = float(os.getenv("GCP_EVENT_DECAY_HALF_LIFE_HOURS", "72"))
 TENSION_LONG_THRESHOLD = float(os.getenv("GCP_TENSION_LONG", "0.65"))
 TENSION_SHORT_THRESHOLD = float(os.getenv("GCP_TENSION_SHORT", "0.35"))
+DIFFUSION_STEPS = int(os.getenv("GCP_DIFFUSION_STEPS", "8"))
+DIFFUSION_DECAY = float(os.getenv("GCP_DIFFUSION_DECAY", "0.85"))
+FORWARD_RETURN_DAYS = int(os.getenv("GCP_FORWARD_RETURN_DAYS", "5"))
+GNN_HIDDEN = int(os.getenv("GCP_GNN_HIDDEN", "64"))
+GNN_HEADS = int(os.getenv("GCP_GNN_HEADS", "4"))
+GNN_EPOCHS = int(os.getenv("GCP_GNN_EPOCHS", "30"))
+GNN_LR = float(os.getenv("GCP_GNN_LR", "1e-3"))
+GNN_CHECKPOINT = Path(
+    os.getenv("GCP_GNN_CHECKPOINT", str(GNN_DIR / "best.pt"))
+)
 
 # ---------------------------------------------------------------------------
 # Ingestion
@@ -117,3 +129,5 @@ def ensure_dirs() -> None:
     """Create runtime directories if missing."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
+    GNN_DIR.mkdir(parents=True, exist_ok=True)
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
