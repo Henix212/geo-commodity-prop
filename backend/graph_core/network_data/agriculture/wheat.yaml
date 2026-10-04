@@ -1,8 +1,12 @@
 commodity: wheat
 sector: agriculture
-description: "Wheat network — producing regions → silos/ports → chokepoints → import mills"
+description: "Wheat network — producing regions → silos/ports → chokepoints → import mills → flour demand + CBOT/Matif"
+
+# Bottleneck nodes (maritime_route_pacific, chokepoint_*) live in
+# shared/bottlenecks.yaml and are merged by graph_core.builder.load_sector().
 
 nodes:
+  # --- Producing regions ---
   - id: region_us_plains_wheat
     commodity: wheat
     type: producing_region
@@ -63,6 +67,7 @@ nodes:
     lat: -34.00
     lon: -60.00
 
+  # --- Silos / inland storage ---
   - id: silo_us_gulf
     commodity: wheat
     type: silo
@@ -71,6 +76,8 @@ nodes:
     country: USA
     region: Gulf
     stock_level_kt: 5000
+    lat: 29.95
+    lon: -90.07
 
   - id: silo_black_sea
     commodity: wheat
@@ -80,7 +87,54 @@ nodes:
     country: Ukraine/Russia
     region: Black Sea
     stock_level_kt: 8000
+    lat: 46.48
+    lon: 32.00
 
+  - id: silo_eu_france
+    commodity: wheat
+    type: silo
+    accepts_forms: [grain]
+    product_form: grain
+    country: France
+    region: Beauce
+    stock_level_kt: 6000
+    lat: 48.45
+    lon: 1.48
+
+  - id: silo_canada_prairies
+    commodity: wheat
+    type: silo
+    accepts_forms: [grain]
+    product_form: grain
+    country: Canada
+    region: Saskatchewan
+    stock_level_kt: 4000
+    lat: 52.13
+    lon: -106.67
+
+  - id: silo_australia_wa
+    commodity: wheat
+    type: silo
+    accepts_forms: [grain]
+    product_form: grain
+    country: Australia
+    region: Western Australia
+    stock_level_kt: 3000
+    lat: -31.95
+    lon: 115.86
+
+  - id: silo_argentina_pampas
+    commodity: wheat
+    type: silo
+    accepts_forms: [grain]
+    product_form: grain
+    country: Argentina
+    region: Buenos Aires
+    stock_level_kt: 3500
+    lat: -34.60
+    lon: -58.38
+
+  # --- Export ports ---
   - id: port_new_orleans_grain
     commodity: wheat
     type: port
@@ -88,6 +142,14 @@ nodes:
     region: Louisiana
     lat: 29.93
     lon: -90.07
+
+  - id: port_houston_grain
+    commodity: wheat
+    type: port
+    country: USA
+    region: Texas
+    lat: 29.76
+    lon: -95.36
 
   - id: port_odessa
     commodity: wheat
@@ -105,6 +167,14 @@ nodes:
     lat: 44.72
     lon: 37.77
 
+  - id: port_constanta_grain
+    commodity: wheat
+    type: port
+    country: Romania
+    region: Constanta
+    lat: 44.16
+    lon: 28.63
+
   - id: port_rouen
     commodity: wheat
     type: port
@@ -120,6 +190,14 @@ nodes:
     region: BC
     lat: 49.29
     lon: -123.11
+
+  - id: port_fremantle
+    commodity: wheat
+    type: port
+    country: Australia
+    region: WA
+    lat: -32.05
+    lon: 115.74
 
   - id: port_esperance
     commodity: wheat
@@ -137,6 +215,7 @@ nodes:
     lat: -32.95
     lon: -60.64
 
+  # --- Import / transshipment ports ---
   - id: port_alexandria
     commodity: wheat
     type: port
@@ -144,6 +223,14 @@ nodes:
     region: Alexandria
     lat: 31.20
     lon: 29.92
+
+  - id: port_jeddah
+    commodity: wheat
+    type: port
+    country: Saudi Arabia
+    region: Red Sea
+    lat: 21.49
+    lon: 39.19
 
   - id: port_shanghai_grain
     commodity: wheat
@@ -153,6 +240,24 @@ nodes:
     lat: 31.23
     lon: 121.47
 
+  - id: port_rotterdam_grain
+    commodity: wheat
+    type: port
+    country: Netherlands
+    region: South Holland
+    lat: 51.95
+    lon: 4.14
+
+  - id: hub_istanbul_grain
+    commodity: wheat
+    type: transshipment
+    accepts_forms: [grain]
+    country: Turkey
+    region: Marmara
+    lat: 41.01
+    lon: 28.98
+
+  # --- Mills ---
   - id: mill_egypt
     commodity: wheat
     type: mill
@@ -161,6 +266,8 @@ nodes:
     country: Egypt
     region: National
     capacity_kt: 15000
+    lat: 30.04
+    lon: 31.24
 
   - id: mill_china
     commodity: wheat
@@ -170,6 +277,8 @@ nodes:
     country: China
     region: National
     capacity_kt: 40000
+    lat: 34.26
+    lon: 108.94
 
   - id: mill_eu
     commodity: wheat
@@ -179,6 +288,8 @@ nodes:
     country: EU
     region: Multi
     capacity_kt: 30000
+    lat: 48.86
+    lon: 2.35
 
   - id: mill_nafrica_maghreb
     commodity: wheat
@@ -188,13 +299,51 @@ nodes:
     country: Morocco/Algeria/Tunisia
     region: Maghreb
     capacity_kt: 12000
+    lat: 33.97
+    lon: -6.85
 
+  - id: mill_turkey
+    commodity: wheat
+    type: mill
+    accepts_forms: [grain]
+    product_form: flour
+    country: Turkey
+    region: Marmara
+    capacity_kt: 18000
+    lat: 41.01
+    lon: 28.98
+
+  - id: mill_saudi
+    commodity: wheat
+    type: mill
+    accepts_forms: [grain]
+    product_form: flour
+    country: Saudi Arabia
+    region: Jeddah
+    capacity_kt: 8000
+    lat: 21.49
+    lon: 39.19
+
+  - id: mill_indonesia
+    commodity: wheat
+    type: mill
+    accepts_forms: [grain]
+    product_form: flour
+    country: Indonesia
+    region: Java
+    capacity_kt: 6000
+    lat: -6.12
+    lon: 106.85
+
+  # --- Consumers ---
   - id: consumer_wheat_mena
     commodity: wheat
     type: consumer
     product_form: flour
     country: MENA
     region: Multi
+    lat: 30.00
+    lon: 31.00
 
   - id: consumer_wheat_asia
     commodity: wheat
@@ -202,7 +351,19 @@ nodes:
     product_form: flour
     country: Asia
     region: Multi
+    lat: 35.00
+    lon: 105.00
 
+  - id: consumer_wheat_eu
+    commodity: wheat
+    type: consumer
+    product_form: flour
+    country: EU
+    region: Multi
+    lat: 50.00
+    lon: 10.00
+
+  # --- Exchanges ---
   - id: exchange_cbot_wheat
     commodity: wheat
     type: exchange
@@ -210,7 +371,38 @@ nodes:
     country: USA
     region: Chicago
 
+  - id: exchange_matif_wheat
+    commodity: wheat
+    type: exchange
+    product_form: grain
+    country: France
+    region: Paris
+
+  # --- Warehouses ---
+  - id: warehouse_us_gulf
+    commodity: wheat
+    type: warehouse
+    accepts_forms: [grain]
+    product_form: grain
+    country: USA
+    region: Gulf
+    stock_level_kt: 2000
+    lat: 29.90
+    lon: -89.98
+
+  - id: warehouse_rouen
+    commodity: wheat
+    type: warehouse
+    accepts_forms: [grain]
+    product_form: grain
+    country: France
+    region: Normandy
+    stock_level_kt: 1500
+    lat: 49.44
+    lon: 1.10
+
 edges:
+  # --- US Plains → Gulf export ---
   - source: region_us_plains_wheat
     target: silo_us_gulf
     flow_type: rail_road
@@ -221,18 +413,49 @@ edges:
     transit_days_max: 10
 
   - source: silo_us_gulf
+    target: warehouse_us_gulf
+    flow_type: warehouse
+    product_form: grain
+    weight: 0.4
+    transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 3
+
+  - source: silo_us_gulf
     target: port_new_orleans_grain
     flow_type: barge
     product_form: grain
-    weight: 1.0
+    weight: 0.7
     transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 7
+
+  - source: silo_us_gulf
+    target: port_houston_grain
+    flow_type: barge
+    product_form: grain
+    weight: 0.3
+    transit_days: 4
+    transit_days_min: 2
+    transit_days_max: 8
+
+  - source: warehouse_us_gulf
+    target: port_new_orleans_grain
+    flow_type: inland_transport
+    product_form: grain
+    weight: 0.5
+    transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 2
 
   - source: port_new_orleans_grain
     target: chokepoint_gibraltar
     flow_type: shipping
     product_form: grain
-    weight: 0.5
+    weight: 0.4
     transit_days: 14
+    transit_days_min: 12
+    transit_days_max: 20
 
   - source: port_new_orleans_grain
     target: chokepoint_panama
@@ -240,27 +463,61 @@ edges:
     product_form: grain
     weight: 0.3
     transit_days: 10
+    transit_days_min: 8
+    transit_days_max: 14
 
+  - source: port_houston_grain
+    target: chokepoint_panama
+    flow_type: shipping
+    product_form: grain
+    weight: 0.3
+    transit_days: 9
+    transit_days_min: 7
+    transit_days_max: 13
+
+  - source: silo_us_gulf
+    target: exchange_cbot_wheat
+    flow_type: commercial
+    product_form: grain
+    weight: 0.5
+    transit_days: 0
+
+  # --- Black Sea corridor ---
   - source: region_black_sea_wheat
     target: silo_black_sea
     flow_type: rail_road
     product_form: grain
     weight: 1.0
     transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 6
 
   - source: silo_black_sea
     target: port_odessa
     flow_type: inland_transport
     product_form: grain
-    weight: 0.5
+    weight: 0.4
     transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 3
 
   - source: silo_black_sea
     target: port_novorossiysk_grain
     flow_type: inland_transport
     product_form: grain
-    weight: 0.5
+    weight: 0.4
     transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
+
+  - source: silo_black_sea
+    target: port_constanta_grain
+    flow_type: inland_transport
+    product_form: grain
+    weight: 0.2
+    transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 5
 
   - source: port_odessa
     target: chokepoint_bosphorus
@@ -278,13 +535,35 @@ edges:
     product_form: grain
     weight: 1.0
     transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 5
+
+  - source: port_constanta_grain
+    target: chokepoint_bosphorus
+    flow_type: shipping
+    product_form: grain
+    weight: 0.8
+    transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 6
+
+  - source: chokepoint_bosphorus
+    target: hub_istanbul_grain
+    flow_type: transshipment
+    product_form: grain
+    weight: 0.6
+    transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 3
 
   - source: chokepoint_bosphorus
     target: chokepoint_gibraltar
     flow_type: shipping
     product_form: grain
-    weight: 0.4
+    weight: 0.3
     transit_days: 8
+    transit_days_min: 6
+    transit_days_max: 12
 
   - source: chokepoint_bosphorus
     target: chokepoint_suez
@@ -292,6 +571,26 @@ edges:
     product_form: grain
     weight: 0.5
     transit_days: 6
+    transit_days_min: 4
+    transit_days_max: 10
+
+  - source: chokepoint_suez
+    target: chokepoint_bab_el_mandeb
+    flow_type: shipping
+    product_form: grain
+    weight: 0.7
+    transit_days: 4
+    transit_days_min: 3
+    transit_days_max: 7
+
+  - source: chokepoint_bab_el_mandeb
+    target: port_jeddah
+    flow_type: shipping
+    product_form: grain
+    weight: 0.5
+    transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 5
 
   - source: chokepoint_suez
     target: port_alexandria
@@ -299,41 +598,114 @@ edges:
     product_form: grain
     weight: 0.8
     transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 5
 
-  - source: chokepoint_gibraltar
-    target: mill_nafrica_maghreb
-    flow_type: shipping
+  - source: hub_istanbul_grain
+    target: mill_turkey
+    flow_type: inland_transport
     product_form: grain
-    weight: 0.5
-    transit_days: 4
+    weight: 0.7
+    transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 2
 
+  # --- EU domestic + export ---
   - source: region_eu_wheat
-    target: port_rouen
+    target: silo_eu_france
     flow_type: inland_transport
     product_form: grain
     weight: 0.6
-    transit_days: 3
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
 
   - source: region_eu_wheat
     target: mill_eu
     flow_type: inland_transport
     product_form: grain
-    weight: 0.7
+    weight: 0.5
     transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 3
+
+  - source: silo_eu_france
+    target: port_rouen
+    flow_type: inland_transport
+    product_form: grain
+    weight: 0.8
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
+
+  - source: silo_eu_france
+    target: warehouse_rouen
+    flow_type: warehouse
+    product_form: grain
+    weight: 0.3
+    transit_days: 1
+
+  - source: warehouse_rouen
+    target: port_rouen
+    flow_type: inland_transport
+    product_form: grain
+    weight: 0.5
+    transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 2
 
   - source: port_rouen
     target: chokepoint_gibraltar
     flow_type: shipping
     product_form: grain
-    weight: 0.5
+    weight: 0.4
     transit_days: 5
+    transit_days_min: 4
+    transit_days_max: 8
+
+  - source: port_rouen
+    target: mill_eu
+    flow_type: coastal_shipping
+    product_form: grain
+    weight: 0.3
+    transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 5
+
+  - source: silo_eu_france
+    target: exchange_matif_wheat
+    flow_type: commercial
+    product_form: grain
+    weight: 0.4
+    transit_days: 0
+
+  # --- Canada Prairies → Pacific ---
+  - source: region_canada_prairies
+    target: silo_canada_prairies
+    flow_type: rail_road
+    product_form: grain
+    weight: 0.7
+    transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 6
 
   - source: region_canada_prairies
     target: port_vancouver_grain
     flow_type: rail_road
     product_form: grain
-    weight: 1.0
+    weight: 0.5
     transit_days: 7
+    transit_days_min: 5
+    transit_days_max: 12
+
+  - source: silo_canada_prairies
+    target: port_vancouver_grain
+    flow_type: rail_road
+    product_form: grain
+    weight: 0.8
+    transit_days: 4
+    transit_days_min: 3
+    transit_days_max: 8
 
   - source: port_vancouver_grain
     target: maritime_route_pacific
@@ -341,6 +713,153 @@ edges:
     product_form: grain
     weight: 1.0
     transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 2
+
+  # --- Australia → Asia / Suez ---
+  - source: region_australia_wheat
+    target: silo_australia_wa
+    flow_type: rail_road
+    product_form: grain
+    weight: 0.6
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
+
+  - source: silo_australia_wa
+    target: port_fremantle
+    flow_type: rail_road
+    product_form: grain
+    weight: 0.7
+    transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 3
+
+  - source: region_australia_wheat
+    target: port_esperance
+    flow_type: rail_road
+    product_form: grain
+    weight: 0.4
+    transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 5
+
+  - source: port_fremantle
+    target: chokepoint_malacca
+    flow_type: shipping
+    product_form: grain
+    weight: 0.5
+    transit_days: 12
+    transit_days_min: 10
+    transit_days_max: 18
+
+  - source: port_fremantle
+    target: chokepoint_suez
+    flow_type: shipping
+    product_form: grain
+    weight: 0.3
+    transit_days: 22
+    transit_days_min: 18
+    transit_days_max: 30
+
+  - source: port_esperance
+    target: chokepoint_malacca
+    flow_type: shipping
+    product_form: grain
+    weight: 0.4
+    transit_days: 11
+    transit_days_min: 9
+    transit_days_max: 16
+
+  - source: port_esperance
+    target: chokepoint_cape_hope
+    flow_type: shipping
+    product_form: grain
+    weight: 0.3
+    transit_days: 20
+    transit_days_min: 16
+    transit_days_max: 28
+
+  # --- Argentina → Cape / Panama ---
+  - source: region_argentina_wheat
+    target: silo_argentina_pampas
+    flow_type: inland_transport
+    product_form: grain
+    weight: 0.7
+    transit_days:  2
+    transit_days_min: 1
+    transit_days_max: 4
+
+  - source: region_argentina_wheat
+    target: port_rosario
+    flow_type: inland_transport
+    product_form: grain
+    weight: 0.5
+    transit_days: 2
+
+  - source: silo_argentina_pampas
+    target: port_rosario
+    flow_type: inland_transport
+    product_form: grain
+    weight: 0.8
+    transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 3
+
+  - source: port_rosario
+    target: chokepoint_cape_hope
+    flow_type: shipping
+    product_form: grain
+    weight: 0.4
+    transit_days: 18
+    transit_days_min: 14
+    transit_days_max: 25
+
+  - source: port_rosario
+    target: chokepoint_panama
+    flow_type: shipping
+    product_form: grain
+    weight: 0.3
+    transit_days: 20
+    transit_days_min: 16
+    transit_days_max: 26
+
+  # --- Chokepoint routing to import ports ---
+  - source: chokepoint_gibraltar
+    target: port_rotterdam_grain
+    flow_type: shipping
+    product_form: grain
+    weight: 0.4
+    transit_days: 4
+    transit_days_min: 3
+    transit_days_max: 7
+
+  - source: chokepoint_gibraltar
+    target: mill_nafrica_maghreb
+    flow_type: shipping
+    product_form: grain
+    weight: 0.5
+    transit_days: 4
+    transit_days_min: 3
+    transit_days_max: 6
+
+  - source: chokepoint_cape_hope
+    target: chokepoint_suez
+    flow_type: shipping
+    product_form: grain
+    weight: 0.3
+    transit_days: 14
+    transit_days_min: 12
+    transit_days_max: 20
+
+  - source: chokepoint_panama
+    target: maritime_route_pacific
+    flow_type: shipping
+    product_form: grain
+    weight: 0.4
+    transit_days: 5
+    transit_days_min: 4
+    transit_days_max: 8
 
   - source: maritime_route_pacific
     target: port_shanghai_grain
@@ -351,54 +870,30 @@ edges:
     transit_days_min: 14
     transit_days_max: 25
 
-  - source: region_australia_wheat
-    target: port_esperance
-    flow_type: rail_road
-    product_form: grain
-    weight: 1.0
-    transit_days: 3
-
-  - source: port_esperance
-    target: chokepoint_malacca
-    flow_type: shipping
-    product_form: grain
-    weight: 0.5
-    transit_days: 12
-
-  - source: port_esperance
-    target: chokepoint_suez
-    flow_type: shipping
-    product_form: grain
-    weight: 0.4
-    transit_days: 20
-
-  - source: region_argentina_wheat
-    target: port_rosario
-    flow_type: inland_transport
-    product_form: grain
-    weight: 1.0
-    transit_days: 2
-
-  - source: port_rosario
-    target: chokepoint_cape_hope
-    flow_type: shipping
-    product_form: grain
-    weight: 0.4
-    transit_days: 18
-
-  - source: port_rosario
-    target: chokepoint_panama
-    flow_type: shipping
-    product_form: grain
-    weight: 0.3
-    transit_days: 20
-
   - source: chokepoint_malacca
     target: port_shanghai_grain
     flow_type: shipping
     product_form: grain
     weight: 0.5
     transit_days: 8
+    transit_days_min: 6
+    transit_days_max: 12
+
+  - source: chokepoint_malacca
+    target: mill_indonesia
+    flow_type: shipping
+    product_form: grain
+    weight: 0.3
+    transit_days: 5
+    transit_days_min: 4
+    transit_days_max: 8
+
+  - source: port_jeddah
+    target: mill_saudi
+    flow_type: inland_transport
+    product_form: grain
+    weight: 0.8
+    transit_days: 1
 
   - source: port_alexandria
     target: mill_egypt
@@ -406,6 +901,8 @@ edges:
     product_form: grain
     weight: 1.0
     transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 2
 
   - source: port_shanghai_grain
     target: mill_china
@@ -413,7 +910,19 @@ edges:
     product_form: grain
     weight: 1.0
     transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
 
+  - source: port_rotterdam_grain
+    target: mill_eu
+    flow_type: inland_transport
+    product_form: grain
+    weight: 0.6
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 3
+
+  # --- Mills → consumers ---
   - source: mill_egypt
     target: consumer_wheat_mena
     flow_type: inland_transport
@@ -427,6 +936,24 @@ edges:
     product_form: flour
     weight: 1.0
     transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 2
+
+  - source: mill_saudi
+    target: consumer_wheat_mena
+    flow_type: inland_transport
+    product_form: flour
+    weight: 0.8
+    transit_days: 2
+
+  - source: mill_turkey
+    target: consumer_wheat_mena
+    flow_type: inland_transport
+    product_form: flour
+    weight: 0.5
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
 
   - source: mill_china
     target: consumer_wheat_asia
@@ -434,6 +961,26 @@ edges:
     product_form: flour
     weight: 1.0
     transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
+
+  - source: mill_indonesia
+    target: consumer_wheat_asia
+    flow_type: inland_transport
+    product_form: flour
+    weight: 0.7
+    transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 5
+
+  - source: mill_eu
+    target: consumer_wheat_eu
+    flow_type: inland_transport
+    product_form: flour
+    weight: 0.8
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 3
 
   - source: mill_eu
     target: consumer_wheat_mena
@@ -441,17 +988,5 @@ edges:
     product_form: flour
     weight: 0.2
     transit_days: 5
-
-  - source: silo_us_gulf
-    target: exchange_cbot_wheat
-    flow_type: commercial
-    product_form: grain
-    weight: 0.5
-    transit_days: 0
-
-  - source: chokepoint_panama
-    target: maritime_route_pacific
-    flow_type: shipping
-    product_form: grain
-    weight: 0.4
-    transit_days: 5
+    transit_days_min: 4
+    transit_days_max: 8

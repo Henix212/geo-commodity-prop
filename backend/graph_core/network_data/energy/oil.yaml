@@ -2,6 +2,17 @@ commodity: oil
 sector: energy
 description: "Crude oil network — fields → terminals → chokepoints → refineries → demand hubs"
 
+# Bottleneck nodes (maritime_route_pacific, chokepoint_*) live in
+# shared/bottlenecks.yaml and are merged by graph_core.builder.load_sector().
+#
+# Schema conventions:
+#   - fields/refineries declare product_form (output) and accepts_forms (input)
+#   - edges declare product_form of the material moving on that link
+#   - transit_days is the mean; transit_days_min/max support Monte Carlo draws
+
+# ---------------------------------------------------------------------------
+# Nodes
+# ---------------------------------------------------------------------------
 nodes:
   # --- Fields / producing basins ---
   - id: field_ghawar
@@ -15,15 +26,38 @@ nodes:
     lat: 25.43
     lon: 49.62
 
+  - id: field_khurais
+    commodity: oil
+    type: field
+    product_form: crude
+    country: Saudi Arabia
+    region: Eastern Province
+    operator: Saudi Aramco
+    capacity_kbd: 1200
+    lat: 24.00
+    lon: 48.00
+
   - id: field_permian
     commodity: oil
     type: field
     product_form: crude
     country: USA
     region: Texas/New Mexico
+    operator: EOG / Pioneer / others
     capacity_kbd: 5500
     lat: 31.85
     lon: -102.35
+
+  - id: field_bakken
+    commodity: oil
+    type: field
+    product_form: crude
+    country: USA
+    region: North Dakota
+    operator: Continental / others
+    capacity_kbd: 1200
+    lat: 47.50
+    lon: -103.50
 
   - id: field_russia_urals
     commodity: oil
@@ -31,7 +65,10 @@ nodes:
     product_form: crude
     country: Russia
     region: Volga-Urals / West Siberia proxy
+    operator: Rosneft / Lukoil
     capacity_kbd: 4500
+    lat: 61.00
+    lon: 73.00
 
   - id: field_iraq_rumaila
     commodity: oil
@@ -39,9 +76,32 @@ nodes:
     product_form: crude
     country: Iraq
     region: Basra
+    operator: BP / CNPC / SOMO
     capacity_kbd: 1400
     lat: 30.15
     lon: 47.40
+
+  - id: field_iran_kharg
+    commodity: oil
+    type: field
+    product_form: crude
+    country: Iran
+    region: Khuzestan
+    operator: NIOC
+    capacity_kbd: 2000
+    lat: 30.43
+    lon: 49.10
+
+  - id: field_uae_murban
+    commodity: oil
+    type: field
+    product_form: crude
+    country: UAE
+    region: Abu Dhabi
+    operator: ADNOC
+    capacity_kbd: 2000
+    lat: 24.00
+    lon: 54.00
 
   - id: field_brazil_pre_salt
     commodity: oil
@@ -49,6 +109,7 @@ nodes:
     product_form: crude
     country: Brazil
     region: Santos Basin
+    operator: Petrobras
     capacity_kbd: 2000
     lat: -25.00
     lon: -43.00
@@ -59,6 +120,7 @@ nodes:
     product_form: crude
     country: UK/Norway
     region: North Sea
+    operator: Equinor / BP
     capacity_kbd: 1500
     lat: 59.00
     lon: 2.00
@@ -69,9 +131,87 @@ nodes:
     product_form: crude
     country: Nigeria
     region: Niger Delta
+    operator: Shell / NNPC
     capacity_kbd: 1400
     lat: 5.00
     lon: 6.50
+
+  - id: field_angola_block17
+    commodity: oil
+    type: field
+    product_form: crude
+    country: Angola
+    region: Offshore
+    operator: TotalEnergies
+    capacity_kbd: 400
+    lat: -7.00
+    lon: 12.00
+
+  - id: field_kazakhstan_tengiz
+    commodity: oil
+    type: field
+    product_form: crude
+    country: Kazakhstan
+    region: Atyrau
+    operator: Chevron / TCO
+    capacity_kbd: 700
+    lat: 46.50
+    lon: 53.50
+
+  - id: field_libya_sharara
+    commodity: oil
+    type: field
+    product_form: crude
+    country: Libya
+    region: Murzuq
+    operator: NOC
+    capacity_kbd: 300
+    lat: 26.50
+    lon: 12.80
+
+  - id: field_kuwait_burgan
+    commodity: oil
+    type: field
+    product_form: crude
+    country: Kuwait
+    region: Burgan
+    operator: KOC
+    capacity_kbd: 1700
+    lat: 28.95
+    lon: 48.40
+
+  - id: field_venezuela_orinoco
+    commodity: oil
+    type: field
+    product_form: crude
+    country: Venezuela
+    region: Orinoco Belt
+    operator: PDVSA
+    capacity_kbd: 800
+    lat: 8.50
+    lon: -62.00
+
+  - id: field_guyana_liza
+    commodity: oil
+    type: field
+    product_form: crude
+    country: Guyana
+    region: Stabroek
+    operator: ExxonMobil / Hess
+    capacity_kbd: 600
+    lat: 7.50
+    lon: -57.50
+
+  - id: field_mexico_ku_maloob
+    commodity: oil
+    type: field
+    product_form: crude
+    country: Mexico
+    region: Campeche
+    operator: Pemex
+    capacity_kbd: 700
+    lat: 19.80
+    lon: -92.40
 
   # --- Export terminals ---
   - id: terminal_ras_tanura
@@ -89,6 +229,14 @@ nodes:
     region: Basra
     lat: 30.45
     lon: 48.00
+
+  - id: terminal_kharg
+    commodity: oil
+    type: terminal
+    country: Iran
+    region: Kharg Island
+    lat: 29.25
+    lon: 50.32
 
   - id: terminal_fujairah
     commodity: oil
@@ -158,6 +306,56 @@ nodes:
     lat: 4.45
     lon: 7.17
 
+  - id: terminal_luanda
+    commodity: oil
+    type: terminal
+    country: Angola
+    region: Luanda
+    lat: -8.84
+    lon: 13.23
+
+  - id: terminal_cpc_kazakhstan
+    commodity: oil
+    type: terminal
+    country: Kazakhstan
+    region: Atyrau
+    lat: 46.80
+    lon: 51.90
+    description: "CPC pipeline export terminal (Tengiz / Kashagan)"
+
+  - id: terminal_kuwait_mina
+    commodity: oil
+    type: terminal
+    country: Kuwait
+    region: Mina Al Ahmadi
+    lat: 29.08
+    lon: 48.17
+
+  - id: terminal_jose_terminal
+    commodity: oil
+    type: terminal
+    country: Venezuela
+    region: Jose
+    lat: 10.10
+    lon: -64.65
+
+  - id: terminal_guyana_floating
+    commodity: oil
+    type: terminal
+    country: Guyana
+    region: Offshore
+    lat: 7.00
+    lon: -57.00
+    description: "FPSO export terminal (Liza proxy)"
+
+  - id: terminal_dos_bocas
+    commodity: oil
+    type: terminal
+    country: Mexico
+    region: Tabasco
+    lat: 18.42
+    lon: -93.20
+
   # --- Refineries ---
   - id: refinery_jamnagar
     commodity: oil
@@ -178,7 +376,10 @@ nodes:
     product_form: products
     country: Singapore
     region: Singapore
+    operator: ExxonMobil / Shell
     capacity_kbd: 1500
+    lat: 1.26
+    lon: 103.85
 
   - id: refinery_china_east
     commodity: oil
@@ -187,7 +388,10 @@ nodes:
     product_form: products
     country: China
     region: East coast
+    operator: Sinopec / PetroChina
     capacity_kbd: 5000
+    lat: 31.23
+    lon: 121.47
     description: "Aggregated East China refining proxy"
 
   - id: refinery_usgc
@@ -197,7 +401,10 @@ nodes:
     product_form: products
     country: USA
     region: Gulf Coast
+    operator: Valero / Marathon / others
     capacity_kbd: 9000
+    lat: 29.73
+    lon: -95.00
 
   - id: refinery_ara
     commodity: oil
@@ -206,7 +413,58 @@ nodes:
     product_form: products
     country: EU
     region: ARA
+    operator: Shell / Total / others
     capacity_kbd: 2000
+    lat: 51.95
+    lon: 4.14
+
+  - id: refinery_yanbu
+    commodity: oil
+    type: refinery
+    accepts_forms: [crude]
+    product_form: products
+    country: Saudi Arabia
+    region: Yanbu
+    operator: Aramco / Sinopec
+    capacity_kbd: 400
+    lat: 24.09
+    lon: 38.06
+
+  - id: refinery_sk_ulsan
+    commodity: oil
+    type: refinery
+    accepts_forms: [crude]
+    product_form: products
+    country: South Korea
+    region: Ulsan
+    operator: SK Innovation
+    capacity_kbd: 840
+    lat: 35.54
+    lon: 129.34
+
+  - id: refinery_china_south
+    commodity: oil
+    type: refinery
+    accepts_forms: [crude]
+    product_form: products
+    country: China
+    region: Guangdong
+    operator: Sinopec
+    capacity_kbd: 1200
+    lat: 23.10
+    lon: 113.25
+
+  - id: refinery_mexico_salina
+    commodity: oil
+    type: refinery
+    accepts_forms: [crude]
+    product_form: products
+    country: Mexico
+    region: Veracruz
+    operator: Pemex
+    capacity_kbd: 330
+    lat: 18.75
+    lon: -95.95
 
   # --- Demand / exchange ---
   - id: consumer_oil_china
@@ -215,6 +473,8 @@ nodes:
     product_form: products
     country: China
     region: National
+    lat: 39.90
+    lon: 116.40
 
   - id: consumer_oil_us
     commodity: oil
@@ -222,6 +482,8 @@ nodes:
     product_form: products
     country: USA
     region: National
+    lat: 38.90
+    lon: -77.04
 
   - id: consumer_oil_eu
     commodity: oil
@@ -229,6 +491,8 @@ nodes:
     product_form: products
     country: EU
     region: Multi
+    lat: 50.85
+    lon: 4.35
 
   - id: consumer_oil_india
     commodity: oil
@@ -236,6 +500,17 @@ nodes:
     product_form: products
     country: India
     region: National
+    lat: 28.61
+    lon: 77.21
+
+  - id: consumer_oil_japan
+    commodity: oil
+    type: consumer
+    product_form: products
+    country: Japan
+    region: National
+    lat: 35.68
+    lon: 139.69
 
   - id: exchange_nymex_wti
     commodity: oil
@@ -243,6 +518,8 @@ nodes:
     product_form: crude
     country: USA
     region: New York
+    lat: 40.71
+    lon: -74.01
 
   - id: exchange_ice_brent
     commodity: oil
@@ -250,15 +527,29 @@ nodes:
     product_form: crude
     country: UK
     region: London
+    lat: 51.51
+    lon: -0.08
 
+# ---------------------------------------------------------------------------
+# Edges (physical + commercial flows)
+# ---------------------------------------------------------------------------
 edges:
-  # Gulf production → Hormuz
+  # --- Gulf production → Hormuz ---
   - source: field_ghawar
     target: terminal_ras_tanura
     flow_type: pipeline
     product_form: crude
     weight: 1.0
     transit_days: 1
+
+  - source: field_khurais
+    target: terminal_ras_tanura
+    flow_type: pipeline
+    product_form: crude
+    weight: 0.8
+    transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 2
 
   - source: terminal_ras_tanura
     target: chokepoint_hormuz
@@ -282,8 +573,42 @@ edges:
     product_form: crude
     weight: 1.0
     transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 2
 
-  # Hormuz → Asia / Cape / Suez alternatives
+  - source: field_iran_kharg
+    target: terminal_kharg
+    flow_type: pipeline
+    product_form: crude
+    weight: 1.0
+    transit_days: 1
+
+  - source: terminal_kharg
+    target: chokepoint_hormuz
+    flow_type: shipping
+    product_form: crude
+    weight: 1.0
+    transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 3
+
+  - source: field_uae_murban
+    target: terminal_fujairah
+    flow_type: pipeline
+    product_form: crude
+    weight: 0.6
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 3
+
+  - source: field_uae_murban
+    target: chokepoint_hormuz
+    flow_type: shipping
+    product_form: crude
+    weight: 0.5
+    transit_days: 2
+
+  # --- Hormuz → Asia / Suez / Cape ---
   - source: chokepoint_hormuz
     target: chokepoint_malacca
     flow_type: shipping
@@ -307,6 +632,8 @@ edges:
     product_form: crude
     weight: 0.6
     transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 5
 
   - source: chokepoint_malacca
     target: terminal_ningbo_zhoushan
@@ -323,6 +650,8 @@ edges:
     product_form: crude
     weight: 0.3
     transit_days: 7
+    transit_days_min: 5
+    transit_days_max: 10
 
   - source: chokepoint_bab_el_mandeb
     target: chokepoint_suez
@@ -330,6 +659,8 @@ edges:
     product_form: crude
     weight: 1.0
     transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 5
 
   - source: chokepoint_suez
     target: terminal_rotterdam
@@ -356,6 +687,8 @@ edges:
     product_form: crude
     weight: 0.4
     transit_days: 18
+    transit_days_min: 14
+    transit_days_max: 24
 
   - source: chokepoint_cape_hope
     target: chokepoint_malacca
@@ -363,14 +696,25 @@ edges:
     product_form: crude
     weight: 0.3
     transit_days: 16
+    transit_days_min: 12
+    transit_days_max: 22
 
-  # Americas
+  - source: chokepoint_hormuz
+    target: refinery_yanbu
+    flow_type: shipping
+    product_form: crude
+    weight: 0.3
+    transit_days: 3
+
+  # --- Americas ---
   - source: field_permian
     target: terminal_cushing
     flow_type: pipeline
     product_form: crude
     weight: 0.5
     transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 5
 
   - source: field_permian
     target: terminal_houston
@@ -378,6 +722,17 @@ edges:
     product_form: crude
     weight: 0.8
     transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
+
+  - source: field_bakken
+    target: terminal_cushing
+    flow_type: pipeline
+    product_form: crude
+    weight: 0.7
+    transit_days: 4
+    transit_days_min: 3
+    transit_days_max: 6
 
   - source: terminal_houston
     target: chokepoint_panama
@@ -385,6 +740,8 @@ edges:
     product_form: crude
     weight: 0.3
     transit_days: 8
+    transit_days_min: 6
+    transit_days_max: 12
 
   - source: terminal_houston
     target: chokepoint_gibraltar
@@ -392,6 +749,17 @@ edges:
     product_form: crude
     weight: 0.2
     transit_days: 16
+    transit_days_min: 12
+    transit_days_max: 22
+
+  - source: chokepoint_panama
+    target: terminal_ningbo_zhoushan
+    flow_type: shipping
+    product_form: crude
+    weight: 0.3
+    transit_days: 22
+    transit_days_min: 18
+    transit_days_max: 30
 
   - source: field_brazil_pre_salt
     target: chokepoint_cape_hope
@@ -399,6 +767,8 @@ edges:
     product_form: crude
     weight: 0.4
     transit_days: 18
+    transit_days_min: 14
+    transit_days_max: 24
 
   - source: field_brazil_pre_salt
     target: chokepoint_gibraltar
@@ -406,7 +776,17 @@ edges:
     product_form: crude
     weight: 0.4
     transit_days: 12
+    transit_days_min: 9
+    transit_days_max: 16
 
+  - source: field_brazil_pre_salt
+    target: terminal_houston
+    flow_type: shipping
+    product_form: crude
+    weight: 0.3
+    transit_days: 14
+
+  # --- West Africa ---
   - source: field_nigeria_niger_delta
     target: terminal_bonny
     flow_type: pipeline
@@ -420,6 +800,8 @@ edges:
     product_form: crude
     weight: 0.5
     transit_days: 10
+    transit_days_min: 8
+    transit_days_max: 14
 
   - source: terminal_bonny
     target: chokepoint_cape_hope
@@ -427,13 +809,41 @@ edges:
     product_form: crude
     weight: 0.4
     transit_days: 14
+    transit_days_min: 11
+    transit_days_max: 18
 
+  - source: field_angola_block17
+    target: terminal_luanda
+    flow_type: pipeline
+    product_form: crude
+    weight: 1.0
+    transit_days: 1
+
+  - source: terminal_luanda
+    target: chokepoint_cape_hope
+    flow_type: shipping
+    product_form: crude
+    weight: 0.6
+    transit_days: 5
+    transit_days_min: 3
+    transit_days_max: 8
+
+  - source: terminal_luanda
+    target: chokepoint_gibraltar
+    flow_type: shipping
+    product_form: crude
+    weight: 0.5
+    transit_days: 8
+
+  # --- Russia / Caspian / Libya ---
   - source: field_russia_urals
     target: terminal_novorossiysk
     flow_type: pipeline
     product_form: crude
     weight: 0.5
     transit_days: 5
+    transit_days_min: 3
+    transit_days_max: 8
 
   - source: terminal_novorossiysk
     target: chokepoint_bosphorus
@@ -441,6 +851,8 @@ edges:
     product_form: crude
     weight: 1.0
     transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
 
   - source: chokepoint_bosphorus
     target: chokepoint_gibraltar
@@ -448,6 +860,35 @@ edges:
     product_form: crude
     weight: 0.7
     transit_days: 8
+    transit_days_min: 6
+    transit_days_max: 12
+
+  - source: field_kazakhstan_tengiz
+    target: terminal_cpc_kazakhstan
+    flow_type: pipeline
+    product_form: crude
+    weight: 1.0
+    transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 5
+
+  - source: terminal_cpc_kazakhstan
+    target: chokepoint_bosphorus
+    flow_type: shipping
+    product_form: crude
+    weight: 0.8
+    transit_days: 5
+    transit_days_min: 4
+    transit_days_max: 8
+
+  - source: field_libya_sharara
+    target: chokepoint_gibraltar
+    flow_type: shipping
+    product_form: crude
+    weight: 0.5
+    transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 6
 
   - source: field_north_sea
     target: terminal_rotterdam
@@ -455,8 +896,10 @@ edges:
     product_form: crude
     weight: 1.0
     transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 5
 
-  # Into refining
+  # --- Into refining ---
   - source: terminal_singapore
     target: refinery_singapore
     flow_type: pipeline
@@ -477,6 +920,17 @@ edges:
     product_form: crude
     weight: 0.5
     transit_days: 6
+    transit_days_min: 4
+    transit_days_max: 10
+
+  - source: chokepoint_malacca
+    target: refinery_sk_ulsan
+    flow_type: shipping
+    product_form: crude
+    weight: 0.4
+    transit_days: 10
+    transit_days_min: 7
+    transit_days_max: 14
 
   - source: terminal_houston
     target: refinery_usgc
@@ -499,6 +953,15 @@ edges:
     weight: 1.0
     transit_days: 1
 
+  - source: chokepoint_gibraltar
+    target: terminal_rotterdam
+    flow_type: shipping
+    product_form: crude
+    weight: 0.6
+    transit_days: 5
+    transit_days_min: 4
+    transit_days_max: 8
+
   - source: field_north_sea
     target: exchange_ice_brent
     flow_type: commercial
@@ -506,13 +969,31 @@ edges:
     weight: 0.5
     transit_days: 0
 
-  # Products → consumers
+  - source: terminal_rotterdam
+    target: exchange_ice_brent
+    flow_type: commercial
+    product_form: crude
+    weight: 0.4
+    transit_days: 0
+
+  - source: refinery_yanbu
+    target: chokepoint_bab_el_mandeb
+    flow_type: shipping
+    product_form: products
+    weight: 0.5
+    transit_days: 4
+    transit_days_min: 3
+    transit_days_max: 6
+
+  # --- Products → consumers ---
   - source: refinery_china_east
     target: consumer_oil_china
     flow_type: inland_transport
     product_form: products
     weight: 1.0
     transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
 
   - source: refinery_usgc
     target: consumer_oil_us
@@ -527,6 +1008,8 @@ edges:
     product_form: products
     weight: 1.0
     transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 3
 
   - source: refinery_jamnagar
     target: consumer_oil_india
@@ -541,10 +1024,174 @@ edges:
     product_form: products
     weight: 0.3
     transit_days: 8
+    transit_days_min: 6
+    transit_days_max: 12
 
-  - source: chokepoint_gibraltar
-    target: terminal_rotterdam
+  - source: refinery_sk_ulsan
+    target: consumer_oil_japan
+    flow_type: shipping
+    product_form: products
+    weight: 0.5
+    transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 5
+
+  - source: refinery_sk_ulsan
+    target: consumer_oil_china
+    flow_type: shipping
+    product_form: products
+    weight: 0.3
+    transit_days: 4
+
+  - source: refinery_ara
+    target: consumer_oil_us
+    flow_type: shipping
+    product_form: products
+    weight: 0.2
+    transit_days: 12
+    transit_days_min: 9
+    transit_days_max: 16
+
+  - source: terminal_fujairah
+    target: refinery_jamnagar
+    flow_type: shipping
+    product_form: crude
+    weight: 0.3
+    transit_days: 5
+    transit_days_min: 4
+    transit_days_max: 8
+
+  # --- Kuwait / Venezuela / Guyana / Mexico ---
+  - source: field_kuwait_burgan
+    target: terminal_kuwait_mina
+    flow_type: pipeline
+    product_form: crude
+    weight: 1.0
+    transit_days: 1
+
+  - source: terminal_kuwait_mina
+    target: chokepoint_hormuz
+    flow_type: shipping
+    product_form: crude
+    weight: 1.0
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 3
+
+  - source: field_venezuela_orinoco
+    target: terminal_jose_terminal
+    flow_type: pipeline
+    product_form: crude
+    weight: 1.0
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
+
+  - source: terminal_jose_terminal
+    target: chokepoint_panama
+    flow_type: shipping
+    product_form: crude
+    weight: 0.5
+    transit_days: 5
+    transit_days_min: 4
+    transit_days_max: 8
+
+  - source: terminal_jose_terminal
+    target: chokepoint_gibraltar
+    flow_type: shipping
+    product_form: crude
+    weight: 0.4
+    transit_days: 12
+    transit_days_min: 9
+    transit_days_max: 16
+
+  - source: field_guyana_liza
+    target: terminal_guyana_floating
+    flow_type: pipeline
+    product_form: crude
+    weight: 1.0
+    transit_days: 1
+
+  - source: terminal_guyana_floating
+    target: terminal_houston
     flow_type: shipping
     product_form: crude
     weight: 0.6
+    transit_days: 8
+    transit_days_min: 6
+    transit_days_max: 12
+
+  - source: terminal_guyana_floating
+    target: chokepoint_gibraltar
+    flow_type: shipping
+    product_form: crude
+    weight: 0.4
+    transit_days: 14
+    transit_days_min: 11
+    transit_days_max: 18
+
+  - source: field_mexico_ku_maloob
+    target: terminal_dos_bocas
+    flow_type: pipeline
+    product_form: crude
+    weight: 1.0
+    transit_days: 1
+
+  - source: terminal_dos_bocas
+    target: refinery_mexico_salina
+    flow_type: pipeline
+    product_form: crude
+    weight: 0.7
+    transit_days: 2
+
+  - source: terminal_dos_bocas
+    target: terminal_houston
+    flow_type: shipping
+    product_form: crude
+    weight: 0.5
+    transit_days: 4
+    transit_days_min: 3
+    transit_days_max: 6
+
+  - source: chokepoint_malacca
+    target: refinery_china_south
+    flow_type: shipping
+    product_form: crude
+    weight: 0.5
     transit_days: 5
+    transit_days_min: 4
+    transit_days_max: 8
+
+  - source: refinery_china_south
+    target: consumer_oil_china
+    flow_type: inland_transport
+    product_form: products
+    weight: 0.8
+    transit_days: 2
+
+  - source: refinery_mexico_salina
+    target: consumer_oil_us
+    flow_type: inland_transport
+    product_form: products
+    weight: 0.4
+    transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 5
+
+  - source: chokepoint_suez
+    target: refinery_ara
+    flow_type: shipping
+    product_form: crude
+    weight: 0.3
+    transit_days: 8
+    transit_days_min: 6
+    transit_days_max: 12
+
+  - source: terminal_singapore
+    target: refinery_sk_ulsan
+    flow_type: shipping
+    product_form: crude
+    weight: 0.3
+    transit_days: 7
+    transit_days_min: 5
+    transit_days_max: 10

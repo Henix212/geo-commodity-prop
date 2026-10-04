@@ -2,6 +2,17 @@ commodity: lng
 sector: energy
 description: "LNG network — liquefaction → chokepoints → regas terminals → gas demand"
 
+# Bottleneck nodes (maritime_route_pacific, chokepoint_*) live in
+# shared/bottlenecks.yaml and are merged by graph_core.builder.load_sector().
+#
+# Schema conventions:
+#   - liquefaction/regas declare product_form (output) and accepts_forms (input)
+#   - edges declare product_form of the material moving on that link
+#   - transit_days is the mean; transit_days_min/max support Monte Carlo draws
+
+# ---------------------------------------------------------------------------
+# Nodes
+# ---------------------------------------------------------------------------
 nodes:
   # --- Liquefaction ---
   - id: lng_ras_laffan
@@ -26,6 +37,17 @@ nodes:
     lat: -20.78
     lon: 115.45
 
+  - id: lng_northwest_shelf
+    commodity: lng
+    type: liquefaction
+    product_form: lng
+    country: Australia
+    region: WA
+    operator: Woodside
+    capacity_mtpa: 16.3
+    lat: -20.60
+    lon: 116.77
+
   - id: lng_sabine_pass
     commodity: lng
     type: liquefaction
@@ -36,6 +58,17 @@ nodes:
     capacity_mtpa: 30
     lat: 29.75
     lon: -93.87
+
+  - id: lng_corpus_christi
+    commodity: lng
+    type: liquefaction
+    product_form: lng
+    country: USA
+    region: Texas
+    operator: Cheniere
+    capacity_mtpa: 15
+    lat: 27.80
+    lon: -97.40
 
   - id: lng_yamal
     commodity: lng
@@ -54,6 +87,7 @@ nodes:
     product_form: lng
     country: Nigeria
     region: Bonny Island
+    operator: NLNG
     capacity_mtpa: 22
     lat: 4.42
     lon: 7.17
@@ -64,9 +98,87 @@ nodes:
     product_form: lng
     country: Mozambique
     region: Rovuma
+    operator: Eni / ExxonMobil
     capacity_mtpa: 3.4
     lat: -10.80
     lon: 40.70
+
+  - id: lng_malaysia_bintulu
+    commodity: lng
+    type: liquefaction
+    product_form: lng
+    country: Malaysia
+    region: Sarawak
+    operator: Petronas
+    capacity_mtpa: 30
+    lat: 3.17
+    lon: 113.03
+
+  - id: lng_papua_new_guinea
+    commodity: lng
+    type: liquefaction
+    product_form: lng
+    country: Papua New Guinea
+    region: Gulf Province
+    operator: ExxonMobil
+    capacity_mtpa: 8.3
+    lat: -9.40
+    lon: 147.15
+
+  - id: lng_oman_qalhat
+    commodity: lng
+    type: liquefaction
+    product_form: lng
+    country: Oman
+    region: Sur
+    operator: Oman LNG
+    capacity_mtpa: 10.4
+    lat: 22.65
+    lon: 59.38
+
+  - id: lng_trinidad_atlantic
+    commodity: lng
+    type: liquefaction
+    product_form: lng
+    country: Trinidad and Tobago
+    region: Point Fortin
+    operator: Atlantic LNG
+    capacity_mtpa: 15
+    lat: 10.18
+    lon: -61.68
+
+  - id: lng_algeria_arzew
+    commodity: lng
+    type: liquefaction
+    product_form: lng
+    country: Algeria
+    region: Arzew
+    operator: Sonatrach
+    capacity_mtpa: 29
+    lat: 35.85
+    lon: -0.32
+
+  - id: lng_indonesia_tangguh
+    commodity: lng
+    type: liquefaction
+    product_form: lng
+    country: Indonesia
+    region: Papua Barat
+    operator: BP / Tangguh LNG
+    capacity_mtpa: 7.6
+    lat: -2.53
+    lon: 133.42
+
+  - id: lng_uae_das_island
+    commodity: lng
+    type: liquefaction
+    product_form: lng
+    country: UAE
+    region: Abu Dhabi
+    operator: ADNOC LNG
+    capacity_mtpa: 6
+    lat: 25.15
+    lon: 52.87
 
   # --- Regas / import terminals ---
   - id: regas_japan_tokyo_bay
@@ -76,6 +188,7 @@ nodes:
     product_form: gas
     country: Japan
     region: Tokyo Bay
+    operator: Tokyo Gas / JERA
     capacity_mtpa: 40
     lat: 35.50
     lon: 139.80
@@ -87,6 +200,7 @@ nodes:
     product_form: gas
     country: South Korea
     region: Incheon
+    operator: KOGAS
     capacity_mtpa: 50
     lat: 37.45
     lon: 126.60
@@ -98,7 +212,10 @@ nodes:
     product_form: gas
     country: China
     region: East/South coast
+    operator: CNOOC / PetroChina
     capacity_mtpa: 100
+    lat: 22.55
+    lon: 114.05
     description: "Aggregated China import capacity proxy"
 
   - id: regas_zeebrugge
@@ -108,6 +225,7 @@ nodes:
     product_form: gas
     country: Belgium
     region: Zeebrugge
+    operator: Fluxys
     capacity_mtpa: 9
     lat: 51.33
     lon: 3.20
@@ -119,6 +237,7 @@ nodes:
     product_form: gas
     country: Netherlands
     region: Rotterdam
+    operator: Gasunie
     capacity_mtpa: 12
     lat: 51.95
     lon: 4.05
@@ -130,9 +249,82 @@ nodes:
     product_form: gas
     country: India
     region: Gujarat
+    operator: Petronet LNG
     capacity_mtpa: 17
     lat: 21.70
     lon: 72.55
+
+  - id: regas_uk_south_hook
+    commodity: lng
+    type: regas
+    accepts_forms: [lng]
+    product_form: gas
+    country: UK
+    region: Milford Haven
+    operator: QatarEnergy / ExxonMobil
+    capacity_mtpa: 15.6
+    lat: 51.70
+    lon: -5.05
+
+  - id: regas_taiwan_yung_an
+    commodity: lng
+    type: regas
+    accepts_forms: [lng]
+    product_form: gas
+    country: Taiwan
+    region: Kaohsiung
+    operator: CPC
+    capacity_mtpa: 10
+    lat: 22.60
+    lon: 120.30
+
+  - id: regas_fos_sur_mer
+    commodity: lng
+    type: regas
+    accepts_forms: [lng]
+    product_form: gas
+    country: France
+    region: Fos-sur-Mer
+    operator: Elengy
+    capacity_mtpa: 10
+    lat: 43.44
+    lon: 4.95
+
+  - id: regas_boston_cameron
+    commodity: lng
+    type: regas
+    accepts_forms: [lng]
+    product_form: gas
+    country: USA
+    region: Massachusetts
+    operator: ENGIE / Eversource
+    capacity_mtpa: 5
+    lat: 42.35
+    lon: -71.05
+
+  - id: regas_thailand_map_ta_phut
+    commodity: lng
+    type: regas
+    accepts_forms: [lng]
+    product_form: gas
+    country: Thailand
+    region: Rayong
+    operator: PTT
+    capacity_mtpa: 5
+    lat: 12.68
+    lon: 101.20
+
+  - id: regas_pakistan_port_qasim
+    commodity: lng
+    type: regas
+    accepts_forms: [lng]
+    product_form: gas
+    country: Pakistan
+    region: Karachi
+    operator: Engro / PSO
+    capacity_mtpa: 5
+    lat: 24.77
+    lon: 67.33
 
   # --- Demand / hub pricing ---
   - id: consumer_lng_japan
@@ -141,6 +333,8 @@ nodes:
     product_form: gas
     country: Japan
     region: National
+    lat: 36.20
+    lon: 138.25
 
   - id: consumer_lng_china
     commodity: lng
@@ -148,6 +342,8 @@ nodes:
     product_form: gas
     country: China
     region: National
+    lat: 39.90
+    lon: 116.40
 
   - id: consumer_lng_eu
     commodity: lng
@@ -155,6 +351,8 @@ nodes:
     product_form: gas
     country: EU
     region: Multi
+    lat: 50.85
+    lon: 4.35
 
   - id: consumer_lng_korea
     commodity: lng
@@ -162,6 +360,53 @@ nodes:
     product_form: gas
     country: South Korea
     region: National
+    lat: 37.57
+    lon: 126.98
+
+  - id: consumer_lng_india
+    commodity: lng
+    type: consumer
+    product_form: gas
+    country: India
+    region: National
+    lat: 28.61
+    lon: 77.21
+
+  - id: consumer_lng_taiwan
+    commodity: lng
+    type: consumer
+    product_form: gas
+    country: Taiwan
+    region: National
+    lat: 23.70
+    lon: 120.96
+
+  - id: consumer_lng_thailand
+    commodity: lng
+    type: consumer
+    product_form: gas
+    country: Thailand
+    region: National
+    lat: 13.75
+    lon: 100.50
+
+  - id: consumer_lng_pakistan
+    commodity: lng
+    type: consumer
+    product_form: gas
+    country: Pakistan
+    region: National
+    lat: 33.69
+    lon: 73.04
+
+  - id: consumer_lng_us
+    commodity: lng
+    type: consumer
+    product_form: gas
+    country: USA
+    region: Northeast
+    lat: 40.71
+    lon: -74.01
 
   - id: hub_ttf
     commodity: lng
@@ -169,6 +414,8 @@ nodes:
     product_form: gas
     country: Netherlands
     region: Title Transfer Facility
+    lat: 52.00
+    lon: 5.00
     description: "European gas hub (TTF)"
 
   - id: hub_jkm
@@ -177,6 +424,8 @@ nodes:
     product_form: lng
     country: Multi
     region: Asia
+    lat: 35.68
+    lon: 139.69
     description: "JKM LNG marker"
 
   - id: hub_hh
@@ -185,10 +434,15 @@ nodes:
     product_form: gas
     country: USA
     region: Henry Hub
+    lat: 30.00
+    lon: -92.15
     description: "US gas hub / NG=F proxy"
 
+# ---------------------------------------------------------------------------
+# Edges (physical + commercial flows)
+# ---------------------------------------------------------------------------
 edges:
-  # Qatar via Hormuz
+  # --- Qatar via Hormuz ---
   - source: lng_ras_laffan
     target: chokepoint_hormuz
     flow_type: shipping
@@ -213,6 +467,8 @@ edges:
     product_form: lng
     weight: 0.3
     transit_days: 6
+    transit_days_min: 4
+    transit_days_max: 9
 
   - source: chokepoint_malacca
     target: regas_japan_tokyo_bay
@@ -229,6 +485,8 @@ edges:
     product_form: lng
     weight: 0.4
     transit_days: 7
+    transit_days_min: 5
+    transit_days_max: 10
 
   - source: chokepoint_malacca
     target: regas_china_coast
@@ -236,12 +494,23 @@ edges:
     product_form: lng
     weight: 0.6
     transit_days: 6
+    transit_days_min: 4
+    transit_days_max: 9
 
   - source: chokepoint_malacca
     target: regas_india_dahej
     flow_type: shipping
     product_form: lng
     weight: 0.4
+    transit_days: 5
+    transit_days_min: 4
+    transit_days_max: 8
+
+  - source: chokepoint_malacca
+    target: regas_taiwan_yung_an
+    flow_type: shipping
+    product_form: lng
+    weight: 0.3
     transit_days: 5
 
   - source: chokepoint_bab_el_mandeb
@@ -250,6 +519,8 @@ edges:
     product_form: lng
     weight: 1.0
     transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 5
 
   - source: chokepoint_suez
     target: regas_zeebrugge
@@ -257,6 +528,8 @@ edges:
     product_form: lng
     weight: 0.5
     transit_days: 10
+    transit_days_min: 8
+    transit_days_max: 14
 
   - source: chokepoint_suez
     target: regas_gate_rotterdam
@@ -264,14 +537,36 @@ edges:
     product_form: lng
     weight: 0.5
     transit_days: 10
+    transit_days_min: 8
+    transit_days_max: 14
 
-  # Australia Pacific
+  - source: chokepoint_suez
+    target: regas_uk_south_hook
+    flow_type: shipping
+    product_form: lng
+    weight: 0.4
+    transit_days: 12
+    transit_days_min: 9
+    transit_days_max: 16
+
+  # --- Australia Pacific ---
   - source: lng_gorgon
     target: maritime_route_pacific
     flow_type: shipping
     product_form: lng
     weight: 0.6
     transit_days: 5
+    transit_days_min: 3
+    transit_days_max: 8
+
+  - source: lng_northwest_shelf
+    target: maritime_route_pacific
+    flow_type: shipping
+    product_form: lng
+    weight: 0.7
+    transit_days: 5
+    transit_days_min: 3
+    transit_days_max: 8
 
   - source: lng_gorgon
     target: chokepoint_malacca
@@ -279,6 +574,15 @@ edges:
     product_form: lng
     weight: 0.5
     transit_days: 10
+    transit_days_min: 8
+    transit_days_max: 14
+
+  - source: lng_northwest_shelf
+    target: chokepoint_malacca
+    flow_type: shipping
+    product_form: lng
+    weight: 0.4
+    transit_days: 9
 
   - source: maritime_route_pacific
     target: regas_japan_tokyo_bay
@@ -295,8 +599,47 @@ edges:
     product_form: lng
     weight: 0.4
     transit_days: 14
+    transit_days_min: 11
+    transit_days_max: 20
 
-  # US Gulf → Europe / Asia
+  - source: maritime_route_pacific
+    target: regas_korea_incheon
+    flow_type: shipping
+    product_form: lng
+    weight: 0.3
+    transit_days: 13
+    transit_days_min: 10
+    transit_days_max: 18
+
+  # --- Malaysia / PNG (regional Asia) ---
+  - source: lng_malaysia_bintulu
+    target: chokepoint_malacca
+    flow_type: shipping
+    product_form: lng
+    weight: 0.8
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
+
+  - source: lng_papua_new_guinea
+    target: maritime_route_pacific
+    flow_type: shipping
+    product_form: lng
+    weight: 0.6
+    transit_days: 4
+    transit_days_min: 3
+    transit_days_max: 6
+
+  - source: lng_papua_new_guinea
+    target: regas_china_coast
+    flow_type: shipping
+    product_form: lng
+    weight: 0.4
+    transit_days: 8
+    transit_days_min: 6
+    transit_days_max: 12
+
+  # --- US Gulf → Europe / Asia ---
   - source: lng_sabine_pass
     target: chokepoint_gibraltar
     flow_type: shipping
@@ -312,6 +655,8 @@ edges:
     product_form: lng
     weight: 0.3
     transit_days: 8
+    transit_days_min: 6
+    transit_days_max: 12
 
   - source: lng_sabine_pass
     target: chokepoint_cape_hope
@@ -322,12 +667,32 @@ edges:
     transit_days_min: 20
     transit_days_max: 35
 
+  - source: lng_corpus_christi
+    target: chokepoint_panama
+    flow_type: shipping
+    product_form: lng
+    weight: 0.5
+    transit_days: 7
+    transit_days_min: 5
+    transit_days_max: 10
+
+  - source: lng_corpus_christi
+    target: chokepoint_gibraltar
+    flow_type: shipping
+    product_form: lng
+    weight: 0.4
+    transit_days: 14
+    transit_days_min: 11
+    transit_days_max: 18
+
   - source: chokepoint_gibraltar
     target: regas_gate_rotterdam
     flow_type: shipping
     product_form: lng
     weight: 0.6
     transit_days: 4
+    transit_days_min: 3
+    transit_days_max: 6
 
   - source: chokepoint_gibraltar
     target: regas_zeebrugge
@@ -336,12 +701,23 @@ edges:
     weight: 0.5
     transit_days: 4
 
+  - source: chokepoint_gibraltar
+    target: regas_uk_south_hook
+    flow_type: shipping
+    product_form: lng
+    weight: 0.4
+    transit_days: 5
+    transit_days_min: 4
+    transit_days_max: 7
+
   - source: chokepoint_panama
     target: chokepoint_malacca
     flow_type: shipping
     product_form: lng
     weight: 0.4
     transit_days: 25
+    transit_days_min: 20
+    transit_days_max: 32
 
   - source: chokepoint_cape_hope
     target: chokepoint_malacca
@@ -349,14 +725,27 @@ edges:
     product_form: lng
     weight: 0.4
     transit_days: 16
+    transit_days_min: 12
+    transit_days_max: 22
 
-  # Russia / Africa
+  - source: chokepoint_cape_hope
+    target: regas_gate_rotterdam
+    flow_type: shipping
+    product_form: lng
+    weight: 0.3
+    transit_days: 14
+    transit_days_min: 11
+    transit_days_max: 18
+
+  # --- Russia / Africa ---
   - source: lng_yamal
     target: chokepoint_gibraltar
     flow_type: shipping
     product_form: lng
     weight: 0.5
     transit_days: 10
+    transit_days_min: 8
+    transit_days_max: 14
     description: "Northern Sea Route seasonal / Atlantic route"
 
   - source: lng_yamal
@@ -365,6 +754,26 @@ edges:
     product_form: lng
     weight: 0.3
     transit_days: 20
+    transit_days_min: 16
+    transit_days_max: 28
+
+  - source: lng_yamal
+    target: chokepoint_bosphorus
+    flow_type: shipping
+    product_form: lng
+    weight: 0.3
+    transit_days: 8
+    transit_days_min: 6
+    transit_days_max: 12
+
+  - source: chokepoint_bosphorus
+    target: regas_gate_rotterdam
+    flow_type: shipping
+    product_form: lng
+    weight: 0.4
+    transit_days: 10
+    transit_days_min: 8
+    transit_days_max: 14
 
   - source: lng_nigeria_bonny
     target: chokepoint_gibraltar
@@ -372,6 +781,17 @@ edges:
     product_form: lng
     weight: 0.6
     transit_days: 10
+    transit_days_min: 8
+    transit_days_max: 14
+
+  - source: lng_nigeria_bonny
+    target: regas_india_dahej
+    flow_type: shipping
+    product_form: lng
+    weight: 0.3
+    transit_days: 14
+    transit_days_min: 11
+    transit_days_max: 18
 
   - source: lng_mozambique_coral
     target: chokepoint_malacca
@@ -379,6 +799,8 @@ edges:
     product_form: lng
     weight: 0.5
     transit_days: 12
+    transit_days_min: 9
+    transit_days_max: 16
 
   - source: lng_mozambique_coral
     target: chokepoint_cape_hope
@@ -386,8 +808,10 @@ edges:
     product_form: lng
     weight: 0.4
     transit_days: 14
+    transit_days_min: 11
+    transit_days_max: 18
 
-  # Regas → consumers / hubs
+  # --- Regas → consumers / hubs ---
   - source: regas_japan_tokyo_bay
     target: consumer_lng_japan
     flow_type: pipeline
@@ -408,6 +832,8 @@ edges:
     product_form: gas
     weight: 1.0
     transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 3
 
   - source: regas_gate_rotterdam
     target: consumer_lng_eu
@@ -423,11 +849,39 @@ edges:
     weight: 0.8
     transit_days: 1
 
+  - source: regas_uk_south_hook
+    target: consumer_lng_eu
+    flow_type: pipeline
+    product_form: gas
+    weight: 0.6
+    transit_days: 1
+
+  - source: regas_india_dahej
+    target: consumer_lng_india
+    flow_type: pipeline
+    product_form: gas
+    weight: 1.0
+    transit_days: 2
+
+  - source: regas_taiwan_yung_an
+    target: consumer_lng_taiwan
+    flow_type: pipeline
+    product_form: gas
+    weight: 1.0
+    transit_days: 1
+
   - source: regas_gate_rotterdam
     target: hub_ttf
     flow_type: commercial
     product_form: gas
     weight: 0.7
+    transit_days: 0
+
+  - source: regas_zeebrugge
+    target: hub_ttf
+    flow_type: commercial
+    product_form: gas
+    weight: 0.5
     transit_days: 0
 
   - source: regas_japan_tokyo_bay
@@ -444,9 +898,140 @@ edges:
     weight: 0.5
     transit_days: 0
 
+  - source: regas_korea_incheon
+    target: hub_jkm
+    flow_type: commercial
+    product_form: lng
+    weight: 0.4
+    transit_days: 0
+
   - source: lng_sabine_pass
     target: hub_hh
     flow_type: commercial
     product_form: gas
     weight: 0.6
     transit_days: 0
+
+  - source: lng_corpus_christi
+    target: hub_hh
+    flow_type: commercial
+    product_form: gas
+    weight: 0.5
+    transit_days: 0
+
+  # --- Oman / Trinidad / Algeria / Indonesia / UAE ---
+  - source: lng_oman_qalhat
+    target: chokepoint_hormuz
+    flow_type: shipping
+    product_form: lng
+    weight: 0.9
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
+
+  - source: lng_uae_das_island
+    target: chokepoint_hormuz
+    flow_type: shipping
+    product_form: lng
+    weight: 0.8
+    transit_days: 1
+    transit_days_min: 1
+    transit_days_max: 3
+
+  - source: lng_trinidad_atlantic
+    target: regas_boston_cameron
+    flow_type: shipping
+    product_form: lng
+    weight: 0.6
+    transit_days: 5
+    transit_days_min: 4
+    transit_days_max: 8
+
+  - source: lng_trinidad_atlantic
+    target: chokepoint_gibraltar
+    flow_type: shipping
+    product_form: lng
+    weight: 0.5
+    transit_days: 10
+    transit_days_min: 8
+    transit_days_max: 14
+
+  - source: lng_algeria_arzew
+    target: regas_fos_sur_mer
+    flow_type: shipping
+    product_form: lng
+    weight: 0.7
+    transit_days: 2
+    transit_days_min: 1
+    transit_days_max: 4
+
+  - source: lng_algeria_arzew
+    target: chokepoint_gibraltar
+    flow_type: shipping
+    product_form: lng
+    weight: 0.5
+    transit_days: 3
+    transit_days_min: 2
+    transit_days_max: 5
+
+  - source: lng_indonesia_tangguh
+    target: chokepoint_malacca
+    flow_type: shipping
+    product_form: lng
+    weight: 0.7
+    transit_days: 6
+    transit_days_min: 4
+    transit_days_max: 9
+
+  - source: lng_indonesia_tangguh
+    target: regas_thailand_map_ta_phut
+    flow_type: shipping
+    product_form: lng
+    weight: 0.5
+    transit_days: 4
+    transit_days_min: 3
+    transit_days_max: 6
+
+  - source: chokepoint_malacca
+    target: regas_pakistan_port_qasim
+    flow_type: shipping
+    product_form: lng
+    weight: 0.3
+    transit_days: 6
+    transit_days_min: 4
+    transit_days_max: 9
+
+  - source: regas_fos_sur_mer
+    target: consumer_lng_eu
+    flow_type: pipeline
+    product_form: gas
+    weight: 0.7
+    transit_days: 1
+
+  - source: regas_fos_sur_mer
+    target: hub_ttf
+    flow_type: commercial
+    product_form: gas
+    weight: 0.4
+    transit_days: 0
+
+  - source: regas_boston_cameron
+    target: consumer_lng_us
+    flow_type: pipeline
+    product_form: gas
+    weight: 1.0
+    transit_days: 1
+
+  - source: regas_thailand_map_ta_phut
+    target: consumer_lng_thailand
+    flow_type: pipeline
+    product_form: gas
+    weight: 1.0
+    transit_days: 1
+
+  - source: regas_pakistan_port_qasim
+    target: consumer_lng_pakistan
+    flow_type: pipeline
+    product_form: gas
+    weight: 1.0
+    transit_days: 1
