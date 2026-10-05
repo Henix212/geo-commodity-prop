@@ -1,8 +1,9 @@
 """Free news / RSS scrapers for commodity shock signals.
 
 Sources:
-  - RSS: Mining.com, OilPrice, EIA, Google News (configurable via GCP_RSS_FEEDS)
-  - GDELT DOC 2.0 API (no API key)
+  - Sector RSS: Mining.com, OilPrice, EIA (GCP_RSS_FEEDS)
+  - Per-commodity Google News RSS (COMMODITY_NEWS_QUERIES — equal weight)
+  - Per-commodity GDELT DOC 2.0 (equal maxrecords quota)
   - NASA EONET natural events (no API key)
 """
 
@@ -302,6 +303,89 @@ def dedupe_articles(articles: Iterable[Article]) -> list[Article]:
     return out
 
 
+def google_news_feed_url(query: str) -> str:
+    """Build a Google News RSS URL for a commodity query."""
+    return (
+        "https://news.google.com/rss/search"
+        f"?q={quote_plus(query)}&hl=en-US&gl=US&ceid=US:en"
+    )
+
+
+def scrape_commodity_feeds(
+    *,
+    session: requests.Session | None = None,
+    sleep_s: float = 0.4,
+    queries: dict[str, str] | None = None,
+) -> list[Article]:
+    """One Google News RSS pull per commodity (equal weight)."""
+    sess = session or _session()
+    qmap = queries or config.COMMODITY_NEWS_QUERIES
+    collected: list[Article] = []
+    for commodity, query in qmap.items():
+        url = google_news_feed_url(query)
+        try:
+            arts = fetch_rss(url, session=sess)
+            for art in arts:
+                # Tag source so we can audit balance later
+                art.source = f"gnews:{commodity}"
+            collected.extend(arts)
+            logger.info("Google News %s → %d articles", commodity, len(arts))
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Google News failed %s: %s", commodity, exc)
+        time.sleep(sleep_s)
+    return collected
+
+
+def scrape_gdelt_balanced(
+    *,
+    timespan: str = "24h",
+    per_commodity: int | None = None,
+    session: requests.Session | None = None,
+    sleep_s: float = 2.0,
+    queries: dict[str, str] | None = None,
+) -> list[Article]:
+    """GDELT fetch with equal maxrecords quota per commodity."""
+    sess = session or _session()
+    qmap = queries or config.COMMODITY_NEWS_QUERIES
+    n = per_commodity if per_commodity is not None else config.GDELT_PER_COMMODITY
+    collected: list[Article] = []
+    for commodity, query in qmap.items():
+        arts: list[Article] = []
+        for attempt in range(3):
+            try:
+                arts = fetch_gdelt(
+                    query,
+                    timespan=timespan,
+                    maxrecords=n,
+                    session=sess,
+                )
+                break
+            except requests.HTTPError as exc:
+                status = getattr(exc.response, "status_code", None)
+                if status == 429 and attempt < 2:
+                    wait = 5.0 * (attempt + 1)
+                    logger.warning(
+                        "GDELT 429 on %s — retry in %.0fs", commodity, wait
+                    )
+                    time.sleep(wait)
+                    continue
+                logger.warning("GDELT failed %s: %s", commodity, exc)
+                break
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("GDELT failed %s: %s", commodity, exc)
+                break
+        for art in arts:
+            if art.source.startswith("gdelt:"):
+                art.source = f"gdelt:{commodity}:{art.source[6:]}"
+            else:
+                art.source = f"gdelt:{commodity}"
+        collected.extend(arts)
+        if arts:
+            logger.info("GDELT %s → %d articles (cap=%d)", commodity, len(arts), n)
+        time.sleep(sleep_s)
+    return collected
+
+
 def scrape_all(
     *,
     rss_feeds: list[str] | None = None,
@@ -310,9 +394,15 @@ def scrape_all(
     gdelt_maxrecords: int = 75,
     include_gdelt: bool = True,
     include_eonet: bool = True,
+    balanced: bool = True,
     sleep_s: float = 0.4,
 ) -> list[Article]:
-    """Scrape configured RSS feeds + optional GDELT + NASA EONET."""
+    """Scrape sector RSS + per-commodity Google News / GDELT (+ optional EONET).
+
+    When ``balanced=True`` (default), GDELT and Google News are pulled once per
+    commodity with equal quotas so oil/gold do not drown out wheat/corn/etc.
+    Pass ``gdelt_query`` (or ``balanced=False``) to fall back to a single OR query.
+    """
     feeds = rss_feeds if rss_feeds is not None else list(config.RSS_FEEDS)
     sess = _session()
     collected: list[Article] = []
@@ -324,16 +414,28 @@ def scrape_all(
             logger.warning("RSS failed %s: %s", feed, exc)
         time.sleep(sleep_s)
 
+    # Per-commodity Google News (always balanced)
+    collected.extend(scrape_commodity_feeds(session=sess, sleep_s=sleep_s))
+
     if include_gdelt:
         try:
-            collected.extend(
-                fetch_gdelt(
-                    gdelt_query,
-                    timespan=gdelt_timespan,
-                    maxrecords=gdelt_maxrecords,
-                    session=sess,
+            if balanced and gdelt_query is None:
+                collected.extend(
+                    scrape_gdelt_balanced(
+                        timespan=gdelt_timespan,
+                        session=sess,
+                        sleep_s=max(sleep_s, 2.0),
+                    )
                 )
-            )
+            else:
+                collected.extend(
+                    fetch_gdelt(
+                        gdelt_query,
+                        timespan=gdelt_timespan,
+                        maxrecords=gdelt_maxrecords,
+                        session=sess,
+                    )
+                )
         except Exception as exc:  # noqa: BLE001
             logger.warning("GDELT failed: %s", exc)
 
@@ -382,8 +484,13 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Scrape free commodity news sources")
     parser.add_argument("--no-gdelt", action="store_true", help="Skip GDELT API")
     parser.add_argument("--no-eonet", action="store_true", help="Skip NASA EONET")
+    parser.add_argument(
+        "--unbalanced",
+        action="store_true",
+        help="Use single GDELT OR-query instead of per-commodity quotas",
+    )
     parser.add_argument("--timespan", default="24h", help="GDELT timespan (e.g. 24h, 7d)")
-    parser.add_argument("--maxrecords", type=int, default=75, help="GDELT max records")
+    parser.add_argument("--maxrecords", type=int, default=75, help="GDELT max records (unbalanced mode)")
     parser.add_argument(
         "--out",
         type=Path,
@@ -401,11 +508,21 @@ def main(argv: list[str] | None = None) -> None:
     articles = scrape_all(
         include_gdelt=not args.no_gdelt,
         include_eonet=not args.no_eonet,
+        balanced=not args.unbalanced,
         gdelt_timespan=args.timespan,
         gdelt_maxrecords=args.maxrecords,
     )
     path = save_articles(articles, args.out)
+
+    # Balance audit: count by commodity tag in source (gnews:X / gdelt:X:...)
+    by_commodity: dict[str, int] = {c: 0 for c in config.COMMODITY_NEWS_QUERIES}
+    for art in articles:
+        parts = art.source.split(":")
+        if len(parts) >= 2 and parts[0] in ("gnews", "gdelt") and parts[1] in by_commodity:
+            by_commodity[parts[1]] += 1
+
     print(f"scraped={len(articles)} out={path}")
+    print("balance:", " ".join(f"{c}={n}" for c, n in by_commodity.items()))
     for art in articles[:5]:
         print(f"- [{art.source}] {art.title[:100]}")
 

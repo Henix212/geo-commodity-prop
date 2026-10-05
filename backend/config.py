@@ -93,6 +93,8 @@ GNN_CHECKPOINT = Path(
 # ---------------------------------------------------------------------------
 # Ingestion
 # ---------------------------------------------------------------------------
+# Sector-level RSS (broad). Per-commodity Google News queries live in
+# COMMODITY_NEWS_QUERIES and are scraped with equal weight.
 RSS_FEEDS: list[str] = [
     feed.strip()
     for feed in os.getenv(
@@ -102,12 +104,23 @@ RSS_FEEDS: list[str] = [
                 "https://www.mining.com/feed/",
                 "https://oilprice.com/rss/main",
                 "https://www.eia.gov/rss/todayinenergy.xml",
-                "https://news.google.com/rss/search?q=copper+OR+Hormuz+OR+LNG+OR+Escondida&hl=en-US&gl=US&ceid=US:en",
             ]
         ),
     ).split(",")
     if feed.strip()
 ]
+
+# Balanced news queries — one slot per tracked commodity.
+COMMODITY_NEWS_QUERIES: dict[str, str] = {
+    "copper": "(copper OR Escondida OR Codelco) AND (mine OR strike OR outage OR sanction OR port)",
+    "aluminum": "(aluminum OR aluminium OR bauxite OR alumina) AND (smelter OR mine OR outage OR sanction)",
+    "silver": "(silver mining OR silver mine OR LBMA silver) AND (mine OR strike OR outage)",
+    "gold": "(gold mining OR gold mine OR LBMA gold) AND (mine OR strike OR outage OR sanction)",
+    "oil": "(crude oil OR Brent OR WTI OR OPEC) AND (pipeline OR refinery OR Hormuz OR sanction OR outage)",
+    "lng": "(LNG OR liquefied natural gas) AND (terminal OR Qatar OR Hormuz OR outage OR sanction)",
+    "wheat": "(wheat OR Black Sea grain) AND (export OR drought OR blockade OR port OR harvest)",
+    "corn": "(corn OR maize) AND (export OR drought OR harvest OR port OR USDA)",
+}
 
 GDELT_QUERY = os.getenv(
     "GCP_GDELT_QUERY",
@@ -116,7 +129,14 @@ GDELT_QUERY = os.getenv(
     "OR strike OR sanction OR outage OR blockade)",
 )
 GDELT_TIMESPAN = os.getenv("GCP_GDELT_TIMESPAN", "24h")
-GDELT_MAXRECORDS = int(os.getenv("GCP_GDELT_MAXRECORDS", "75"))
+# Total GDELT budget; split evenly across COMMODITY_NEWS_QUERIES when balanced.
+GDELT_MAXRECORDS = int(os.getenv("GCP_GDELT_MAXRECORDS", "80"))
+GDELT_PER_COMMODITY = int(
+    os.getenv(
+        "GCP_GDELT_PER_COMMODITY",
+        str(max(5, GDELT_MAXRECORDS // max(1, len(COMMODITY_NEWS_QUERIES)))),
+    )
+)
 LLM_MODEL_PATH = os.getenv(
     "GCP_LLM_MODEL",
     str(MODELS_DIR / "Qwen2.5-7B-Instruct"),
