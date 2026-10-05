@@ -6,7 +6,14 @@ import argparse
 import logging
 
 from backend import config
-from backend.graph_core import feature_dims, load_sector, to_networkx, to_pyg, validate_network
+from backend.graph_core import (
+    feature_dims,
+    load_merged_network,
+    load_sector,
+    to_networkx,
+    to_pyg,
+    validate_network,
+)
 from backend.logging_setup import setup_logging
 
 
@@ -62,7 +69,7 @@ def graph_tensors(network: dict) -> tuple:
 
 def ingest_events(network: dict, *, parse_limit: int | None = None) -> list[dict]:
     """Scrape articles, LLM-extract shocks, map to node_ids, persist + inject."""
-    from backend.database import upsert_events
+    from backend.database import mark_articles_parsed, upsert_events
     from backend.ingestion.parser_llm import (
         EventParser,
         filter_events,
@@ -79,11 +86,14 @@ def ingest_events(network: dict, *, parse_limit: int | None = None) -> list[dict
     logger.info("Ingested %d articles (batch) → %s, db=%s", len(articles), path, config.DB_PATH)
 
     limit = config.LLM_PARSE_LIMIT if parse_limit is None else parse_limit
-    gazetteer = build_gazetteer(network.get("nodes") or [])
+    # Global gazetteer so oil/wheat/copper entities all resolve, even if the
+    # run sector graph is metals-only for inference injection.
+    gazetteer = build_gazetteer(load_merged_network(validate=False).get("nodes") or [])
     parser = EventParser(max_new_tokens=config.LLM_MAX_NEW_TOKENS)
 
+    batch = articles[:limit]
     raw_events = []
-    for art in articles[:limit]:
+    for art in batch:
         raw_events.extend(
             parser.parse_article(
                 title=art.title,
@@ -94,14 +104,16 @@ def ingest_events(network: dict, *, parse_limit: int | None = None) -> list[dict
         )
     events = filter_events(raw_events, require_node=True)
     db_result = upsert_events(events)
+    marked = mark_articles_parsed([a.uid for a in batch])
     injected = inject_events_into_network(network, events)
     logger.info(
-        "LLM events: raw=%d kept=%d db=+%d/~%d injected_nodes=%d",
+        "LLM events: raw=%d kept=%d db=+%d/~%d injected_nodes=%d marked=%d",
         len(raw_events),
         len(events),
         db_result.inserted,
         db_result.updated,
         injected,
+        marked,
     )
     return [e.to_dict() for e in events]
 
@@ -136,9 +148,10 @@ def ingest_events_from_db(
     network: dict,
     *,
     parse_limit: int | None = None,
+    reparse: bool = False,
 ) -> list[dict]:
-    """Parse articles already in SQLite (no re-scrape)."""
-    from backend.database import list_articles, upsert_events
+    """Parse articles already in SQLite (no re-scrape). Skips parsed_at by default."""
+    from backend.database import list_articles, mark_articles_parsed, upsert_events
     from backend.ingestion.entity_resolver import build_gazetteer
     from backend.ingestion.parser_llm import (
         EventParser,
@@ -147,12 +160,12 @@ def ingest_events_from_db(
     )
 
     limit = config.LLM_PARSE_LIMIT if parse_limit is None else parse_limit
-    articles = list_articles(limit=limit)
+    articles = list_articles(limit=limit, unparsed_only=not reparse)
     if not articles:
-        logger.warning("No articles in DB — run scrapers first")
+        logger.warning("No unparsed articles in DB — run scrapers first (or reparse=True)")
         return []
 
-    gazetteer = build_gazetteer(network.get("nodes") or [])
+    gazetteer = build_gazetteer(load_merged_network(validate=False).get("nodes") or [])
     parser = EventParser(max_new_tokens=config.LLM_MAX_NEW_TOKENS)
     raw_events = []
     for i, art in enumerate(articles, 1):
@@ -167,14 +180,16 @@ def ingest_events_from_db(
         )
     events = filter_events(raw_events, require_node=True)
     db_result = upsert_events(events)
+    marked = mark_articles_parsed([a["uid"] for a in articles if a.get("uid")])
     injected = inject_events_into_network(network, events)
     logger.info(
-        "LLM events (from DB): raw=%d kept=%d db=+%d/~%d injected_nodes=%d",
+        "LLM events (from DB): raw=%d kept=%d db=+%d/~%d injected_nodes=%d marked=%d",
         len(raw_events),
         len(events),
         db_result.inserted,
         db_result.updated,
         injected,
+        marked,
     )
     return [e.to_dict() for e in events]
 

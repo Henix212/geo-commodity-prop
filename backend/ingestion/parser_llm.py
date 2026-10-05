@@ -489,12 +489,26 @@ def parse_articles(
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Parse scraped articles into shock events")
     parser.add_argument("--limit", type=int, default=5, help="Max articles to parse")
-    parser.add_argument("--sector", default=config.DEFAULT_SECTOR)
+    parser.add_argument(
+        "--sector",
+        default="all",
+        help="Gazetteer graph: all | metals | energy | agriculture (default: all)",
+    )
     parser.add_argument("--log-level", default=config.LOG_LEVEL)
     parser.add_argument(
         "--no-require-node",
         action="store_true",
         help="Keep events even if entity did not map to a node_id",
+    )
+    parser.add_argument(
+        "--reparse",
+        action="store_true",
+        help="Include already-parsed articles (ignore parsed_at)",
+    )
+    parser.add_argument(
+        "--source",
+        default=None,
+        help="Optional exact articles.source filter (e.g. gnews:copper)",
     )
     args = parser.parse_args(argv)
 
@@ -503,19 +517,36 @@ def main(argv: list[str] | None = None) -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
-    from backend.database import list_articles, upsert_events
-    from backend.graph_core import load_sector
+    from backend.database import list_articles, mark_articles_parsed, upsert_events
+    from backend.graph_core import load_network
 
-    network = load_sector(args.sector, validate=True)
-    articles = list_articles(limit=args.limit)
+    network = load_network(args.sector, validate=True)
+    articles = list_articles(
+        limit=args.limit,
+        source=args.source,
+        unparsed_only=not args.reparse,
+    )
     if not articles:
-        print("No articles in DB — run scrapers first.")
+        print("No unparsed articles in DB — run scrapers first (or pass --reparse).")
         return
 
     gazetteer = build_gazetteer(network["nodes"])
+    logger.info(
+        "Gazetteer sector=%s nodes=%d commodities=%s",
+        network.get("sector"),
+        len(network["nodes"]),
+        network.get("supported_commodities"),
+    )
     ep = EventParser()
     raw_events: list[ShockEvent] = []
-    for art in articles:
+    for i, art in enumerate(articles, 1):
+        logger.info(
+            "LLM parse %d/%d [%s]: %s",
+            i,
+            len(articles),
+            art.get("source") or "",
+            (art.get("title") or "")[:80],
+        )
         raw_events.extend(
             ep.parse_article(
                 title=art["title"],
@@ -526,10 +557,12 @@ def main(argv: list[str] | None = None) -> None:
         )
     events = filter_events(raw_events, require_node=not args.no_require_node)
     result = upsert_events(events)
+    marked = mark_articles_parsed([a["uid"] for a in articles])
     injected = inject_events_into_network(network, events)
     print(
         f"parsed={len(raw_events)} kept={len(events)} "
-        f"db_inserted={result.inserted} injected_nodes={injected}"
+        f"db_inserted={result.inserted} injected_nodes={injected} "
+        f"articles_marked={marked}"
     )
     for ev in events[:10]:
         print(

@@ -97,40 +97,66 @@ def list_articles(
     *,
     limit: int = 100,
     source: str | None = None,
+    unparsed_only: bool = False,
     conn: sqlite3.Connection | None = None,
 ) -> list[dict]:
     owns = conn is None
     conn = conn or connect()
     init_db(conn)
 
+    where: list[str] = []
+    params: list[Any] = []
     if source:
-        rows = conn.execute(
-            """
-            SELECT uid, source, title, url, published, summary,
-                   first_seen_at, last_seen_at, fetch_count
-            FROM articles
-            WHERE source = ?
-            ORDER BY last_seen_at DESC
-            LIMIT ?
-            """,
-            (source, limit),
-        ).fetchall()
-    else:
-        rows = conn.execute(
-            """
-            SELECT uid, source, title, url, published, summary,
-                   first_seen_at, last_seen_at, fetch_count
-            FROM articles
-            ORDER BY last_seen_at DESC
-            LIMIT ?
-            """,
-            (limit,),
-        ).fetchall()
+        where.append("source = ?")
+        params.append(source)
+    if unparsed_only:
+        where.append("parsed_at IS NULL")
+    where_sql = (" WHERE " + " AND ".join(where)) if where else ""
+
+    rows = conn.execute(
+        f"""
+        SELECT uid, source, title, url, published, summary,
+               first_seen_at, last_seen_at, fetch_count, parsed_at
+        FROM articles
+        {where_sql}
+        ORDER BY last_seen_at DESC
+        LIMIT ?
+        """,
+        (*params, limit),
+    ).fetchall()
 
     result = [dict(row) for row in rows]
     if owns:
         conn.close()
     return result
+
+
+def mark_articles_parsed(
+    uids: list[str],
+    *,
+    parsed_at: str | None = None,
+    conn: sqlite3.Connection | None = None,
+) -> int:
+    """Set parsed_at on articles after LLM processing (even if 0 events)."""
+    from datetime import datetime, timezone
+
+    if not uids:
+        return 0
+    owns = conn is None
+    conn = conn or connect()
+    init_db(conn)
+    ts = parsed_at or datetime.now(timezone.utc).isoformat()
+    updated = 0
+    for uid in uids:
+        cur = conn.execute(
+            "UPDATE articles SET parsed_at = ? WHERE uid = ?",
+            (ts, uid),
+        )
+        updated += cur.rowcount
+    conn.commit()
+    if owns:
+        conn.close()
+    return updated
 
 
 def upsert_events(

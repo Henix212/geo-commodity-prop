@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS articles (
     summary TEXT NOT NULL DEFAULT '',
     first_seen_at TEXT NOT NULL,
     last_seen_at TEXT NOT NULL,
-    fetch_count INTEGER NOT NULL DEFAULT 1
+    fetch_count INTEGER NOT NULL DEFAULT 1,
+    parsed_at TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_articles_last_seen ON articles(last_seen_at);
@@ -173,10 +174,26 @@ def init_db(conn: sqlite3.Connection | None = None) -> None:
     try:
         conn.executescript(_SCHEMA)
         _migrate_prices_pk(conn)
+        _migrate_articles_parsed_at(conn)
         conn.commit()
     finally:
         if owns:
             conn.close()
+
+
+def _migrate_articles_parsed_at(conn: sqlite3.Connection) -> None:
+    """Add articles.parsed_at if missing (existing DBs)."""
+    cols = {
+        row[1]
+        for row in conn.execute("PRAGMA table_info(articles)").fetchall()
+    }
+    if not cols:
+        return
+    if "parsed_at" not in cols:
+        conn.execute("ALTER TABLE articles ADD COLUMN parsed_at TEXT")
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_articles_parsed ON articles(parsed_at)"
+    )
 
 
 def _migrate_prices_pk(conn: sqlite3.Connection) -> None:
