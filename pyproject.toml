@@ -28,3 +28,12 @@ packages = ["backend"]
 
 [project.scripts]
 geo-commodity = "backend.main:main"
+
+# Force CUDA torch (RTX 50-series / Windows) — avoid PyPI CPU wheel.
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
