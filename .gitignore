@@ -157,8 +157,12 @@ ENV/
 env.bak/
 venv.bak/
 
-# Local runtime data
-data/
+# Local runtime data (keep empty folder placeholders)
+data/**
+!data/**/
+!data/**/.gitkeep
+*.pt
+.env
 
 # Spyder project settings
 .spyderproject
@@ -219,6 +223,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
 
 # LLM model weights (keep backend/models/.gitkeep and __init__.py)
 backend/models/Qwen*/

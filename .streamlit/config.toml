@@ -1,0 +1,10 @@
+[server]
+fileWatcherType = "none"
+headless = false
+
+[browser]
+gatherUsageStats = false
+
+[runner]
+# Avoid re-running while heavy torch/vectorbt loads are in flight
+fastReruns = false

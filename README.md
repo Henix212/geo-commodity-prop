@@ -1,75 +1,64 @@
 # Geo Commodity Prop
 
-GNN for shock propagation along physical commodity supply chains  
-(mines → ports → chokepoints → smelters → refiners → tension / alpha).
+GNN for **shock propagation** along physical commodity supply chains  
+(mines → ports → chokepoints → smelters → tension / trading signal).
 
-Detailed roadmap: see `[TODO.md](TODO.md)`.
+> Research / education prototype — **not** financial advice.
 
 ## Architecture
 
-1. **Physical graph** — nodes (mines, ports, bottlenecks, …) + edges (flows) in YAML → NetworkX / PyG
-2. **NLP events** — scrape news → LLM → structured shock JSON → map to `node_id` → inject
-3. **GNN (GAT)** — shock-wave propagation → tension score per commodity
-4. **Quant** — signal → VectorBT backtest
+1. **Physical graph** — YAML topology (`datasets/network`) → NetworkX / PyG  
+2. **Events** — scrape news → LLM parse → map to `node_id` → inject  
+3. **GNN (GAT)** — propagate shocks → commodity tension scores  
+4. **Quant** — tension → signal → backtest equity curve  
+5. **Dashboard** — Streamlit map + tension + portfolio  
 
 ```text
-backend/
-  graph_core/     # builder + network_data YAML
-  ingestion/      # scrapers + LLM parser
-  database/       # production, stocks, TC/RC, policies, events
-  quant/          # market_data + strategy + backtest
-  models/         # GNN checkpoints
+src/geo_commodity/   # library (graph, events, store, gnn, quant)
+datasets/            # versioned network YAML + seed reference data
+apps/dashboard/      # Streamlit UI
+apps/api/            # optional FastAPI
+data/                # runtime DB / checkpoints / cache (gitignored)
 ```
 
-
-
-## Data sources (topology)
-
-- [USGS Copper](https://www.usgs.gov/centers/national-minerals-information-center/copper-statistics-and-information)
-- [ICSG](https://icsg.org)
-- [UN Comtrade](https://comtradeplus.un.org)
-- [Cochilco](https://www.cochilco.cl)
-- Company reports (BHP, Freeport, Codelco, Glencore, …)
-- Port / shipping stats (MarineTraffic, port authorities)
-
-
-
-## Network data layout
-
-```text
-backend/graph_core/network_data/
-  shared/          # bottlenecks (Hormuz, Suez, Malacca, Bosphorus, …)
-  metals/          # copper, aluminum, silver, gold
-  energy/          # oil, lng
-  agriculture/     # wheat, corn
-```
-
-YAML = static topology. Prices, actual production, TC/RC, and policies belong in `database/` + `quant/` (not in the YAML files).
-
-## Run
+## Quick start
 
 ```bash
 uv sync
-uv run python -m backend.main --sector metals --skip-ingest
-uv run python -m backend.ingestion.scrapers
-# upserts into data/geo_commodity.db + writes data/raw_articles.jsonl (latest batch)
-
-# LLM parse (uses backend/models/Qwen2.5-7B-Instruct by default)
-# Prefer --from-db so you don't re-scrape while loading the 7B model.
-uv run python -m backend.ingestion.parser_llm --limit 1 --sector metals
-# or:
-uv run python -m backend.main --sector metals --from-db --parse-limit 1
-# On GPU:
-# GCP_DEVICE=cuda uv run python -m backend.main --sector metals --from-db --parse-limit 5
-
-# Re-inject persisted events with time decay (no LLM):
-# uv run python -m backend.main --sector metals --skip-ingest
-# Half-life (hours): GCP_EVENT_DECAY_HALF_LIFE_HOURS=72
-
-# Reference data (production / TC-RC / policies) + prices
-uv run python -m backend.database.seed_data
-uv run python -m backend.quant.market_data --commodity copper --venue COMEX --period 1y
-# uv run python -m backend.quant.market_data --commodity metals --period 2y
+uv run streamlit run apps/dashboard/app.py
 ```
 
+Open [http://localhost:8501](http://localhost:8501).
 
+### Pipeline CLI
+
+```bash
+uv run geo-commodity --sector energy --skip-ingest
+uv run python -m geo_commodity.events.scrapers
+uv run python -m geo_commodity.events.parser_llm --limit 1 --sector energy
+uv run python -m geo_commodity.store.seed_data
+uv run python -m geo_commodity.quant.market_data --commodity oil --period 1y
+# GCP_DEVICE=cuda uv run python -m geo_commodity.gnn.train --sector all --epochs 30
+```
+
+### Optional API
+
+```bash
+uv run uvicorn apps.api.app:app --reload --port 8000
+```
+
+## Data layout
+
+| Path | Role |
+|------|------|
+| `datasets/network/` | Static topology (shared bottlenecks + sector YAML) |
+| `datasets/seed/` | Production / TC-RC / policies reference |
+| `data/db/` | SQLite events & prices |
+| `data/checkpoints/` | GAT `best.pt` |
+| `data/cache/` | yfinance + optional LLM weights |
+
+## Disclaimer
+
+This project is a technical demonstration of graph ML on commodity networks.  
+Signals and backtests use proxies and synthetic tension series where noted.  
+Do not trade on this output without your own research and risk controls.
