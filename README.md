@@ -35,6 +35,7 @@ Open [http://localhost:8501](http://localhost:8501).
 ```bash
 uv run geo-commodity --sector energy --skip-ingest
 uv run python -m geo_commodity.events.scrapers
+uv run python -m geo_commodity.events.scrapers --months 10
 uv run python -m geo_commodity.events.parser_llm --limit 1 --sector energy
 uv run python -m geo_commodity.store.seed_data
 uv run python -m geo_commodity.quant.market_data --commodity oil --period 1y

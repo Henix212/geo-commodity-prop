@@ -223,15 +223,52 @@ def fetch_eonet(
     return articles
 
 
+def _gdelt_stamp(dt: datetime) -> str:
+    """Format UTC datetime as GDELT DOC ``YYYYMMDDHHMMSS``."""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    else:
+        dt = dt.astimezone(timezone.utc)
+    return dt.strftime("%Y%m%d%H%M%S")
+
+
+def _add_months(dt: datetime, n: int) -> datetime:
+    """Shift calendar month by ``n`` (day clamped to 1st, UTC)."""
+    y = dt.year + (dt.month - 1 + n) // 12
+    m = (dt.month - 1 + n) % 12 + 1
+    return datetime(y, m, 1, tzinfo=timezone.utc)
+
+
+def _month_windows(months: int) -> list[tuple[datetime, datetime]]:
+    """N UTC calendar windows ``[month_start, next_month_start)``, oldest first."""
+    if months < 1:
+        raise ValueError("months must be >= 1")
+    now = datetime.now(timezone.utc)
+    cur = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+    start0 = _add_months(cur, -(months - 1))
+    windows: list[tuple[datetime, datetime]] = []
+    for i in range(months):
+        start = _add_months(start0, i)
+        end = _add_months(start0, i + 1)
+        windows.append((start, end))
+    return windows
+
+
 def fetch_gdelt(
     query: str | None = None,
     *,
-    timespan: str = "24h",
+    timespan: str | None = "24h",
+    start: datetime | None = None,
+    end: datetime | None = None,
     maxrecords: int = 75,
     session: requests.Session | None = None,
     timeout: int = DEFAULT_TIMEOUT,
 ) -> list[Article]:
-    """Fetch recent articles from GDELT DOC 2.0 (no API key)."""
+    """Fetch articles from GDELT DOC 2.0 (no API key).
+
+    Pass ``start`` + ``end`` for a dated window (``startdatetime`` /
+    ``enddatetime``). Otherwise use ``timespan`` (e.g. ``24h``, ``7d``).
+    """
     sess = session or _session()
     q = query or config.GDELT_QUERY
     url = (
@@ -239,10 +276,20 @@ def fetch_gdelt(
         f"?query={quote_plus(q)}"
         f"&mode=ArtList&format=json"
         f"&maxrecords={maxrecords}"
-        f"&timespan={timespan}"
         f"&sort=DateDesc"
     )
-    logger.info("Fetching GDELT timespan=%s maxrecords=%s", timespan, maxrecords)
+    if start is not None and end is not None:
+        url += f"&startdatetime={_gdelt_stamp(start)}&enddatetime={_gdelt_stamp(end)}"
+        logger.info(
+            "Fetching GDELT window=%s→%s maxrecords=%s",
+            _gdelt_stamp(start),
+            _gdelt_stamp(end),
+            maxrecords,
+        )
+    else:
+        ts = timespan or "24h"
+        url += f"&timespan={ts}"
+        logger.info("Fetching GDELT timespan=%s maxrecords=%s", ts, maxrecords)
     resp = sess.get(url, timeout=timeout)
     resp.raise_for_status()
     # GDELT sometimes returns empty body or HTML on overload
@@ -336,52 +383,136 @@ def scrape_commodity_feeds(
     return collected
 
 
+def _fetch_gdelt_with_retries(
+    query: str | None,
+    *,
+    timespan: str | None,
+    start: datetime | None,
+    end: datetime | None,
+    maxrecords: int,
+    session: requests.Session,
+    label: str,
+) -> list[Article]:
+    arts: list[Article] = []
+    for attempt in range(3):
+        try:
+            arts = fetch_gdelt(
+                query,
+                timespan=timespan,
+                start=start,
+                end=end,
+                maxrecords=maxrecords,
+                session=session,
+            )
+            break
+        except requests.HTTPError as exc:
+            status = getattr(exc.response, "status_code", None)
+            if status == 429 and attempt < 2:
+                wait = 5.0 * (attempt + 1)
+                logger.warning("GDELT 429 on %s — retry in %.0fs", label, wait)
+                time.sleep(wait)
+                continue
+            logger.warning("GDELT failed %s: %s", label, exc)
+            break
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("GDELT failed %s: %s", label, exc)
+            break
+    return arts
+
+
 def scrape_gdelt_balanced(
     *,
-    timespan: str = "24h",
+    timespan: str | None = "24h",
+    months: int | None = None,
     per_commodity: int | None = None,
     session: requests.Session | None = None,
     sleep_s: float = 2.0,
     queries: dict[str, str] | None = None,
 ) -> list[Article]:
-    """GDELT fetch with equal maxrecords quota per commodity."""
+    """GDELT fetch with equal maxrecords quota per commodity.
+
+    When ``months`` is set, pull one dated window per calendar month (oldest
+    first) instead of using ``timespan``.
+    """
     sess = session or _session()
     qmap = queries or config.COMMODITY_NEWS_QUERIES
     n = per_commodity if per_commodity is not None else config.GDELT_PER_COMMODITY
+    windows: list[tuple[datetime | None, datetime | None]]
+    if months is not None:
+        windows = [(s, e) for s, e in _month_windows(months)]
+        timespan = None
+    else:
+        windows = [(None, None)]
+
     collected: list[Article] = []
-    for commodity, query in qmap.items():
-        arts: list[Article] = []
-        for attempt in range(3):
-            try:
-                arts = fetch_gdelt(
-                    query,
-                    timespan=timespan,
-                    maxrecords=n,
-                    session=sess,
+    for start, end in windows:
+        win_label = (
+            f"{_gdelt_stamp(start)[:8]}→{_gdelt_stamp(end)[:8]}"
+            if start is not None and end is not None
+            else f"timespan={timespan}"
+        )
+        for commodity, query in qmap.items():
+            label = f"{commodity}@{win_label}"
+            arts = _fetch_gdelt_with_retries(
+                query,
+                timespan=timespan,
+                start=start,
+                end=end,
+                maxrecords=n,
+                session=sess,
+                label=label,
+            )
+            for art in arts:
+                if art.source.startswith("gdelt:"):
+                    art.source = f"gdelt:{commodity}:{art.source[6:]}"
+                else:
+                    art.source = f"gdelt:{commodity}"
+            collected.extend(arts)
+            if arts:
+                logger.info(
+                    "GDELT %s → %d articles (cap=%d)", label, len(arts), n
                 )
-                break
-            except requests.HTTPError as exc:
-                status = getattr(exc.response, "status_code", None)
-                if status == 429 and attempt < 2:
-                    wait = 5.0 * (attempt + 1)
-                    logger.warning(
-                        "GDELT 429 on %s — retry in %.0fs", commodity, wait
-                    )
-                    time.sleep(wait)
-                    continue
-                logger.warning("GDELT failed %s: %s", commodity, exc)
-                break
-            except Exception as exc:  # noqa: BLE001
-                logger.warning("GDELT failed %s: %s", commodity, exc)
-                break
-        for art in arts:
-            if art.source.startswith("gdelt:"):
-                art.source = f"gdelt:{commodity}:{art.source[6:]}"
-            else:
-                art.source = f"gdelt:{commodity}"
+            time.sleep(sleep_s)
+    return collected
+
+
+def scrape_gdelt_unbalanced(
+    *,
+    query: str | None = None,
+    timespan: str | None = "24h",
+    months: int | None = None,
+    maxrecords: int = 75,
+    session: requests.Session | None = None,
+    sleep_s: float = 2.0,
+) -> list[Article]:
+    """Single GDELT OR-query; optional monthly dated windows."""
+    sess = session or _session()
+    windows: list[tuple[datetime | None, datetime | None]]
+    if months is not None:
+        windows = [(s, e) for s, e in _month_windows(months)]
+        timespan = None
+    else:
+        windows = [(None, None)]
+
+    collected: list[Article] = []
+    for start, end in windows:
+        win_label = (
+            f"{_gdelt_stamp(start)[:8]}→{_gdelt_stamp(end)[:8]}"
+            if start is not None and end is not None
+            else f"timespan={timespan}"
+        )
+        arts = _fetch_gdelt_with_retries(
+            query,
+            timespan=timespan,
+            start=start,
+            end=end,
+            maxrecords=maxrecords,
+            session=sess,
+            label=win_label,
+        )
         collected.extend(arts)
         if arts:
-            logger.info("GDELT %s → %d articles (cap=%d)", commodity, len(arts), n)
+            logger.info("GDELT unbalanced %s → %d articles", win_label, len(arts))
         time.sleep(sleep_s)
     return collected
 
@@ -392,20 +523,26 @@ def scrape_all(
     gdelt_query: str | None = None,
     gdelt_timespan: str = "24h",
     gdelt_maxrecords: int = 75,
+    months: int | None = None,
     include_gdelt: bool = True,
     include_eonet: bool = True,
     balanced: bool = True,
     sleep_s: float = 0.4,
+    gdelt_sleep_s: float | None = None,
 ) -> list[Article]:
     """Scrape sector RSS + per-commodity Google News / GDELT (+ optional EONET).
 
     When ``balanced=True`` (default), GDELT and Google News are pulled once per
     commodity with equal quotas so oil/gold do not drown out wheat/corn/etc.
     Pass ``gdelt_query`` (or ``balanced=False``) to fall back to a single OR query.
+
+    ``months`` switches GDELT to dated monthly windows (``startdatetime`` /
+    ``enddatetime``); ``gdelt_timespan`` is ignored for GDELT in that mode.
     """
     feeds = rss_feeds if rss_feeds is not None else list(config.RSS_FEEDS)
     sess = _session()
     collected: list[Article] = []
+    gdelt_sleep = gdelt_sleep_s if gdelt_sleep_s is not None else max(sleep_s, 2.0)
 
     for feed in feeds:
         try:
@@ -414,7 +551,7 @@ def scrape_all(
             logger.warning("RSS failed %s: %s", feed, exc)
         time.sleep(sleep_s)
 
-    # Per-commodity Google News (always balanced)
+    # Per-commodity Google News (always balanced, recent only)
     collected.extend(scrape_commodity_feeds(session=sess, sleep_s=sleep_s))
 
     if include_gdelt:
@@ -422,18 +559,21 @@ def scrape_all(
             if balanced and gdelt_query is None:
                 collected.extend(
                     scrape_gdelt_balanced(
-                        timespan=gdelt_timespan,
+                        timespan=None if months else gdelt_timespan,
+                        months=months,
                         session=sess,
-                        sleep_s=max(sleep_s, 2.0),
+                        sleep_s=gdelt_sleep,
                     )
                 )
             else:
                 collected.extend(
-                    fetch_gdelt(
-                        gdelt_query,
-                        timespan=gdelt_timespan,
+                    scrape_gdelt_unbalanced(
+                        query=gdelt_query,
+                        timespan=None if months else gdelt_timespan,
+                        months=months,
                         maxrecords=gdelt_maxrecords,
                         session=sess,
+                        sleep_s=gdelt_sleep,
                     )
                 )
         except Exception as exc:  # noqa: BLE001
@@ -489,8 +629,29 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="Use single GDELT OR-query instead of per-commodity quotas",
     )
-    parser.add_argument("--timespan", default="24h", help="GDELT timespan (e.g. 24h, 7d)")
-    parser.add_argument("--maxrecords", type=int, default=75, help="GDELT max records (unbalanced mode)")
+    parser.add_argument(
+        "--timespan",
+        default="24h",
+        help="GDELT timespan when --months is not set (e.g. 24h, 7d, 30d)",
+    )
+    parser.add_argument(
+        "--months",
+        type=int,
+        default=None,
+        help="GDELT historical lookback in calendar months (uses startdatetime/enddatetime)",
+    )
+    parser.add_argument(
+        "--sleep",
+        type=float,
+        default=2.0,
+        help="Sleep seconds between GDELT calls (default: 2.0)",
+    )
+    parser.add_argument(
+        "--maxrecords",
+        type=int,
+        default=75,
+        help="GDELT max records (unbalanced mode; balanced uses per-commodity quota)",
+    )
     parser.add_argument(
         "--out",
         type=Path,
@@ -505,12 +666,17 @@ def main(argv: list[str] | None = None) -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
+    if args.months is not None and args.months < 1:
+        parser.error("--months must be >= 1")
+
     articles = scrape_all(
         include_gdelt=not args.no_gdelt,
         include_eonet=not args.no_eonet,
         balanced=not args.unbalanced,
         gdelt_timespan=args.timespan,
         gdelt_maxrecords=args.maxrecords,
+        months=args.months,
+        gdelt_sleep_s=args.sleep,
     )
     path = save_articles(articles, args.out)
 
@@ -522,6 +688,8 @@ def main(argv: list[str] | None = None) -> None:
             by_commodity[parts[1]] += 1
 
     print(f"scraped={len(articles)} out={path}")
+    if args.months:
+        print(f"gdelt_months={args.months}")
     print("balance:", " ".join(f"{c}={n}" for c, n in by_commodity.items()))
     for art in articles[:5]:
         print(f"- [{art.source}] {art.title[:100]}")
