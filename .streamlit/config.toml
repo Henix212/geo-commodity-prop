@@ -6,5 +6,12 @@ headless = false
 gatherUsageStats = false
 
 [runner]
-# Avoid re-running while heavy torch/vectorbt loads are in flight
 fastReruns = false
+
+[theme]
+base = "dark"
+primaryColor = "#3d9a7a"
+backgroundColor = "#0c1218"
+secondaryBackgroundColor = "#141c24"
+textColor = "#e8eef4"
+font = "sans serif"
